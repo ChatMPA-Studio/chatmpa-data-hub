@@ -1,0 +1,56 @@
+# ─────────────────────────────────────────────────────────────
+#  SECRETOS — NUNCA subir a GitHub
+#  (credenciales reales; usa credentials.example.csv como plantilla)
+# ─────────────────────────────────────────────────────────────
+credentials*.csv
+!credentials.example.csv
+!credentials_AWS.example.csv
+.env
+.env.*
+!.env.example
+*.secret
+*.key
+*.pem
+
+# ─────────────────────────────────────────────────────────────
+#  Datos pesados / descargados (quita patrones si quieres versionarlos)
+# ─────────────────────────────────────────────────────────────
+data/**/*.nc
+data/**/*.tif
+data/**/*.tiff
+data/**/*.zip
+sst_data/
+chl_data/
+erddap_data/
+
+# ─────────────────────────────────────────────────────────────
+#  Skills — staging data (NUNCA versionar; CONAPESCA tiene datos sensibles)
+# ─────────────────────────────────────────────────────────────
+skills/data/*
+!skills/data/README.md
+!skills/data/.gitkeep
+skills/**/outputs/
+skills/**/*.rds
+skills/**/*.RData
+skills/**/*.parquet
+.Rhistory
+
+# ─────────────────────────────────────────────────────────────
+#  Python
+# ─────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# ─────────────────────────────────────────────────────────────
+#  Sistema
+# ─────────────────────────────────────────────────────────────
+.DS_Store
+
+# Doc MCP con token real (usa docs/mcp_connection.example.md como plantilla)
+docs/mcp_connection.md
+
+# Descargas ERDDAP (reproducibles con los scripts)
+data/erddap/

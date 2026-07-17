@@ -1,0 +1,10 @@
+# Conexión a MCPs (HTTP)
+requests>=2.31
+
+# Conexión directa a RDS/MySQL
+pymysql>=1.1
+
+# Manejo de datos y NetCDF (ERDDAP: SST / Chl-a)
+pandas>=2.0
+xarray>=2024.1
+netCDF4>=1.6
