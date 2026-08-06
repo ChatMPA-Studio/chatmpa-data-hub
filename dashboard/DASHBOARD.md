@@ -63,26 +63,29 @@ When the user clicks an MPA polygon, the right panel fills with data. Content is
 ```
 ┌─────────────────────────────────────────┐
 │ [badge] Marine Protected Area           │
-│ Name of the MPA                         │  ← panel header (sticky)
+│ Name of the MPA                         │  ← panel header
 │ Category · LTEM: <region name>          │
-├──────────┬──────────┬──────────┬────────┤
-│ BIOMASS  │ URCHINS  │ ART.     │ GORGO- │  ← KPI grid (4 cards)
-│ x.xx T/ha│ xx ind   │ CPUE xxx │ NIANS  │
-│          │ /transect│ kg/day   │ xx ind │
+├────────┬────────┬────────┬──────────────┤
+│BIOMASS │INVERTS │ART.    │ IND.         │  ← KPI grid (6 cards, 3×2)
+│x.xx    │xx ind  │CPUE    │ CPUE         │
+│T/ha    │/transect│xxx    │ xxx kg/day   │
+├────────┼────────┼────────┼──────────────┤
+│ SST    │ Chl-a  │        │              │
+│xx.x °C │x.xxx   │        │              │
+│        │mg/m³   │        │              │
 ├─────────────────────────────────────────┤
-│ Fish Biomass — GAM Trend (T/ha)         │  ← biomass time series
-│ [line chart]                            │
+│ Fish Biomass — Trophic Structure (T/ha) │  ← stacked area chart
+│ [6 functional groups, stacked]          │    (GAM trend fallback if
+│                                         │     no functional group data)
 ├─────────────────────────────────────────┤
 │ Fishing Pressure · [Region badge]       │  ← CPUE section
 │ ARTISANAL  xxx kg/day                   │
 │ INDUSTRIAL xxx kg/day                   │
 │ CPUE Trend 2001–2026 [dual line chart]  │
 ├─────────────────────────────────────────┤
-│ Invertebrate Abundance                  │  ← invertebrate section
-│ Echinoidea  [chart]                     │
-│ Asteroidea  [chart]                     │
-│ Holaxonia   [chart]                     │
-│ Scleractinia [chart]                    │
+│ Marine Environment                      │  ← environment section
+│ Marine Heatwaves [bar + line chart]     │
+│ Chlorophyll-a [line chart]              │
 └─────────────────────────────────────────┘
 ```
 
@@ -94,81 +97,126 @@ When the user clicks an MPA polygon, the right panel fills with data. Content is
 | Title | MPA name (from shapefile `nombre_amp` field) |
 | Subtitle | `{categoria}  ·  LTEM: {ltem_region}` (omit LTEM part if no data) |
 
-### 3.2 KPI grid — 4 cards in a 2×2 grid
+---
 
-Each card has: **label** (10px uppercase), **value** (22px bold), **unit** (11px), **sub** (11px smaller note).
+### 3.2 KPI grid — 6 cards in a 3×2 grid
+
+Each card has: **label** (10px uppercase), **value** (18px bold), **unit** (10px), **sub** (10px smaller note).
 
 #### Card 1 — Fish Biomass
 | Field | Content |
 |-------|---------|
 | Label | `FISH BIOMASS` |
-| Value | `{mean_biomass}` rounded to 2 decimals |
+| Value | `{mean_biomass_g_m2}` rounded to 2 decimals |
 | Unit | `T / ha` |
-| Sub | `Mean · last 5 survey years` |
-| Source skill | `ltem-fish-biomass` |
+| Sub | `Mean · 5-yr surveys · LTEM` |
+| Source | `ltem-fish-biomass` → `mpa_data[name].biomass.kpi.mean_biomass_g_m2` |
 | If no data | Show `—` |
 
-> **T/ha**: tonnes per hectare. 1 T/ha = 100 g/m². Cabo Pulmo (well-recovered MPA) is ~0.09 T/ha. Unprotected reefs typically < 0.01 T/ha.
+> **T/ha**: tonnes per hectare. Cabo Pulmo (well-recovered MPA) ≈ 0.09 T/ha. Unprotected reefs typically < 0.01 T/ha.
 
-#### Card 2 — Sea Urchins
+#### Card 2 — Invertebrates
 | Field | Content |
 |-------|---------|
-| Label | `SEA URCHINS (ECHINOIDEA)` |
-| Value | `{mean_abundance}` rounded to 1 decimal |
+| Label | `INVERTEBRATES` |
+| Value | Echinoidea `mean_abundance_per_transect`, 1 decimal |
 | Unit | `ind. / transect` |
-| Sub | `Mean · last 5 survey years` |
-| Source skill | `ltem-invertebrate-abundance` |
+| Sub | `Echinoidea · LTEM` |
+| Source | `mpa_data[name].invertebrates.Echinoidea.kpi.mean_abundance_per_transect` |
+| If no data | Show `—` |
 
-> Sea urchins (Echinoidea) are key reef grazers. High abundance can indicate overgrazing of algae or, in recovering reefs, predator-controlled balance.
+> Echinoidea (sea urchins) are used as the single representative invertebrate KPI — most abundant and ecologically significant. Full 4-taxon time series appears in the CPUE section's sibling invertebrate skill output.
 
-#### Card 3 — Artisanal CPUE
+#### Card 3 — Art. CPUE
 | Field | Content |
 |-------|---------|
-| Label | `ARTISANAL CPUE` |
+| Label | `ART. CPUE` |
 | Value | `{kpi_menores_mean_cpue}` rounded to integer |
-| Unit | `kg / effective day` |
-| Sub | `MENORES · 5-yr mean · {region_name}` |
-| Source | `conapesca-lfo-regions` aggregation |
+| Unit | `kg / eff. day` |
+| Sub | `MENORES · 5-yr · {region_name}` |
+| Source | `cpue_regions[conapesca_region_id].kpi_menores_mean_cpue` |
+| If no data | Show `—` |
 
-> CPUE = Catch Per Unit Effort. This is an all-species aggregate for the artisanal (small-boat, MENORES) fleet in the CONAPESCA fishing region where this MPA sits. Higher value = more productive fishing trips.
-
-#### Card 4 — Gorgonians
+#### Card 4 — Ind. CPUE
 | Field | Content |
 |-------|---------|
-| Label | `GORGONIANS (HOLAXONIA)` |
-| Value | `{mean_abundance}` rounded to 1 decimal |
-| Unit | `ind. / transect` |
-| Sub | `Mean · last 5 survey years` |
-| Source skill | `ltem-invertebrate-abundance` |
+| Label | `IND. CPUE` |
+| Value | `{kpi_mayores_mean_cpue}` rounded to integer |
+| Unit | `kg / eff. day` |
+| Sub | `MAYORES · 5-yr · {region_name}` |
+| Source | `cpue_regions[conapesca_region_id].kpi_mayores_mean_cpue` |
+| If no data | Show `—` |
 
-> Gorgonian corals (Holaxonia, sea fans) are structural reef builders. Their abundance signals reef habitat quality and is sensitive to temperature stress.
+#### Card 5 — SST
+| Field | Content |
+|-------|---------|
+| Label | `SST` |
+| Value | `{kpi_mean_sst_c}` rounded to 1 decimal |
+| Unit | `°C · OISST` |
+| Sub | `{kpi_years} · {kpi_mhw_days_per_yr} MHW days/yr` |
+| Source | `mpa_data[name].sst` |
+| If outside GoC | Show `—` with tag `GoC only` (SST data covers Gulf of California only) |
+
+> SST coverage: lon −115.875 to −105.875, lat 22.125 to 31.625 (OISST). MPAs outside this bbox (Islas Marietas, Huatulco, Revillagigedo) show the "GoC only" tag.
+
+#### Card 6 — Chl-a
+| Field | Content |
+|-------|---------|
+| Label | `CHL-A` |
+| Value | `{kpi_mean_chla_mg_m3}` rounded to 3 decimals |
+| Unit | `mg/m³ · MODIS` |
+| Sub | `{kpi_years} · annual mean` |
+| Source | `mpa_data[name].chl` |
+| If no data | Show `—` with tag `no data` |
 
 ---
 
-### 3.3 Fish Biomass — GAM Trend chart
+### 3.3 Fish Biomass — Trophic Structure chart
 
-**Chart type:** Line chart with scatter overlay  
+**Primary display (when `functional_groups` data exists):**
+
+**Chart type:** Stacked area chart  
 **Library:** Chart.js  
-**Height:** 150–160 px
+**Height:** 190 px
 
 | Element | Detail |
 |---------|--------|
 | X axis | Year (integer) |
-| Y axis | Fish biomass in **T/ha** (label: `T/ha`) |
-| Scatter points | Observed annual means — color `#0B2338`, white border |
-| Trend line | GAM fitted values — `#1E9EC4` (marine teal), 2 px |
-| CI band | GAM 95% CI — `rgba(30,158,196,0.15)` fill between upper/lower |
-| Y minimum | 0 (biomass cannot be negative) |
-| Warning | If < 5 survey years: amber text `⚠ Only N survey years — trend not fitted (min 5)` |
-| Info | When trend fitted: show `GAM deviance explained: XX%` in grey |
+| Y axis | Fish biomass in **T/ha** (label: `T/ha`), stacked |
+| Series | 6 trophic functional groups (see color table below) |
+| Fill | Each series filled with 80% opacity of group color |
+| Border | Group color, 0.8 px |
+| Tension | 0.3 (slight smoothing) |
+| Points | Hidden (`pointRadius: 0`) |
+| Legend | Bottom, 9px font, reversed order (top group on right) |
+| Stack | Chart.js `stack: 'biomass'` on both axes |
 
-**What the GAM means:** The GAM (Generalized Additive Model) fits a flexible smooth curve through the annual averages, accounting for the fact that different reefs within the same MPA have different baseline biomass levels. The trend line shows the population-level trajectory — is biomass going up, down, or stable?
+**Trophic functional groups (in stacking order, bottom to top):**
+
+| Group key | Spanish label | Color |
+|-----------|--------------|-------|
+| `GenPred_solitary` | Depredadores solitarios | `#D73027` |
+| `GenPred_schooling` | Depredadores en cardúmenes | `#FC8D59` |
+| `EpiBent_schooling` | Omnívoros en cardúmen | `#FEE08B` |
+| `Crip_schooling` | Herbívoros en cardúmen | `#91BFDB` |
+| `Crip_solitary` | Crípticos solitarios | `#4575B4` |
+| `Plank` | Planctívoros | `#313695` |
+
+**Fallback (when `functional_groups` is absent but `biomass` exists):**
+
+Show the GAM trend chart instead (scatter + smooth line + 95% CI band), same as the old design:
+
+| Element | Detail |
+|---------|--------|
+| Height | 150 px |
+| Scatter | Observed annual means — `#0B2338`, white border, 4 px |
+| Trend line | GAM fit — `#1E9EC4`, 2 px |
+| CI band | `rgba(30,158,196,0.15)` between `lwr` and `upr` |
+| Sub-label | `GAM dev.expl.: {dev_expl_pct}%` in grey (10px) |
 
 ---
 
 ### 3.4 Fishing Pressure — CONAPESCA section
-
-Shows fishing effort around the MPA based on its CONAPESCA fishing region.
 
 **KPI row (2 cards side by side):**
 
@@ -181,18 +229,16 @@ Shows fishing effort around the MPA based on its CONAPESCA fishing region.
 
 | Element | Detail |
 |---------|--------|
-| Height | 120 px |
+| Height | 130 px |
 | Line 1 | MENORES (artisanal) — `#21925F` solid, 1.8 px |
 | Line 2 | MAYORES (industrial) — `#C6892A` dashed (4,3), 1.8 px |
 | X axis | Year |
 | Y axis | kg / effective day |
-| Legend | Bottom, small (9px font) |
+| Legend | Bottom, 9px font |
 
-**Region badge:** Show the region name (e.g., `GoC Sur y BCS`) with a small teal dot in a pill-shaped badge above the KPI row.
+**Region badge:** Pill-shaped badge with a small teal dot and region name (e.g., `GoC Sur y BCS`) above the KPI row.
 
-**What this means for non-engineers:** MENORES = small-scale artisanal boats (the ones you see on beaches). MAYORES = industrial trawlers and vessels. A high industrial CPUE near an MPA means large-scale fishing pressure in the surrounding waters.
-
-**Data note:** CPUE is not per-MPA but per CONAPESCA fishing region. All MPAs within the same region show the same CPUE time series. Current regions and which MPAs belong to them:
+**Data note:** CPUE is regional, not per-MPA. All MPAs in the same CONAPESCA region share the same time series.
 
 | Region | MPAs in demo |
 |--------|-------------|
@@ -204,57 +250,70 @@ Shows fishing effort around the MPA based on its CONAPESCA fishing region.
 
 ---
 
-### 3.5 Invertebrate Abundance — 4 taxon charts
+### 3.5 Marine Environment section
 
-Four stacked charts, one per taxon (single-column layout). Each chart is 90–100 px tall.
+Two charts stacked vertically. Both are optional — render only when data is available.
 
-**Taxa displayed (in this order):**
+#### 3.5.1 Marine Heatwaves (MHW) chart
 
-| Order | Taxon | What it is | Chart color |
-|-------|-------|-----------|-------------|
-| 1 | **Echinoidea** | Sea urchins — reef grazers, very common | `#1E9EC4` (teal) |
-| 2 | **Asteroidea** | Sea stars — predators, indicator of food web health | `#21925F` (green) |
-| 3 | **Holaxonia** | Gorgonian corals (sea fans) — structural habitat builders | `#7C5A93` (purple) |
-| 4 | **Scleractinia** | Stony corals (hard corals) — reef builders | `#C6892A` (amber) |
-
-**Per-taxon chart:**
+**Chart type:** Combo — bars (heatwave days) + line (mean SST)  
+**Height:** 130 px  
+**Shown when:** `mpa_data[name].sst` exists (GoC MPAs only)
 
 | Element | Detail |
 |---------|--------|
-| Title | Taxon name (10px bold, above chart) |
-| X axis | Year (ticks max 4) |
-| Y axis | Individuals per transect (no label needed at this size) |
-| Y minimum | 0 |
-| Scatter points | Observed annual means — taxon color, 2.5 px radius |
-| Trend line | GAM fitted — taxon color, 1.5 px |
-| CI band | `{taxon_color}28` (28 = 16% opacity hex) |
+| Bars | Annual heatwave days/yr — `rgba(204,76,67,0.65)` fill, left Y axis |
+| Line | Annual mean SST °C — `#1E9EC4`, 1.5 px, right Y axis |
+| X axis | Year (1982–2025) |
+| Left Y label | `MHW days` |
+| Right Y label | `°C` |
+| Legend | Bottom, 9px |
+| Note below chart | `Baseline: 1998–2011 · min 5 consecutive days (Hobday et al. 2016)` |
 
-**If a taxon has no data for this MPA:** skip rendering that chart entirely (do not show an empty frame).
+> MHW = Marine Heatwave. A day counts as a heatwave day when SST exceeds the local 90th percentile for ≥ 5 consecutive days. Detection uses the `heatwaveR` R package with OISST daily data.
+
+#### 3.5.2 Chlorophyll-a time series
+
+**Chart type:** Line chart with area fill  
+**Height:** 130 px  
+**Shown when:** `mpa_data[name].chl` exists
+
+| Element | Detail |
+|---------|--------|
+| Line | Annual mean Chl-a — `#21925F`, 1.8 px |
+| Fill | `rgba(33,146,95,0.12)` under the line |
+| X axis | Year (2004–2023) |
+| Y label | `mg/m³` |
+| Tension | 0.3 |
+| Points | 2.5 px radius, `#21925F` |
+| Note below chart | `Monthly composites averaged annually · mg m⁻³` |
 
 ---
 
 ## 4. Data availability
 
-### What is pre-computed in the current demo
+### Pre-computed in the current demo
 
-The demo (`dashboard/demo/demo_data.json`) contains pre-computed results for **12 MPAs** with LTEM monitoring data:
+`demo_data.json` contains results for **12 MPAs** (LTEM monitoring sites). Data coverage varies by source:
 
-| MPA | LTEM Region | CONAPESCA Region |
-|-----|------------|-----------------|
-| Alto Golfo de California y Delta del Río Colorado | Alto Golfo | R1 GoC Norte |
-| Islas Marietas | Bahía de Banderas | R4 Pac. Nayarit-Guerrero |
-| Cabo Pulmo | Cabo Pulmo | R3 GoC Sur y BCS |
-| Huatulco | Huatulco | R7 Pac. Sur |
-| Islas Marías | Islas Marias | R4 Pac. Nayarit-Guerrero |
-| Zona marina del Archipiélago de Espíritu Santo | La Paz | R3 GoC Sur y BCS |
-| Balandra | La Ventana | R3 GoC Sur y BCS |
-| Bahía de Loreto | Loreto | R3 GoC Sur y BCS |
-| Cabo San Lucas | Los Cabos | R3 GoC Sur y BCS |
-| Revillagigedo | Revillagigedo | R3 GoC Sur y BCS |
-| Ventilas Hidrotermales (Cuenca de Guaymas) | San Basilio | R3 GoC Sur y BCS |
-| El Vizcaíno | Santa Rosalía | R2 Pac. Baja Norte |
+| MPA | LTEM | SST | Chl-a | CONAPESCA region |
+|-----|------|-----|-------|-----------------|
+| Alto Golfo | ✓ | ✓ GoC | ✓ | R1 GoC Norte |
+| El Vizcaíno | ✓ | ✓ GoC | ✓ | R2 Pac. Baja Norte |
+| Cabo Pulmo | ✓ | ✓ GoC | ✓ | R3 GoC Sur y BCS |
+| Bahía de Loreto | ✓ | ✓ GoC | ✓ | R3 GoC Sur y BCS |
+| Espíritu Santo | ✓ | ✓ GoC | ✓ | R3 GoC Sur y BCS |
+| Balandra | ✓ | ✓ GoC | ✓ | R3 GoC Sur y BCS |
+| Cabo San Lucas | ✓ | ✓ GoC | ✓ | R3 GoC Sur y BCS |
+| Islas Marías | ✓ | ✓ GoC | ✓ | R4 Pac. Nayarit-Guerrero |
+| Ventilas Hidrotermales | ✓ | ✓ GoC | ✓ | R3 GoC Sur y BCS |
+| Islas Marietas | ✓ | — (outside GoC bbox) | ✓ | R4 Pac. Nayarit-Guerrero |
+| Huatulco | ✓ | — (outside GoC bbox) | ✓ | R7 Pac. Sur |
+| Revillagigedo | ✓ | — (outside GoC bbox) | ✓ | R3 GoC Sur y BCS |
 
-The remaining ~40 MPA polygons on the map exist but have no LTEM data — they show a muted style and a "No LTEM data" tooltip. In production, the AI orchestrator would query the MCPs on demand for any MPA.
+**SST spatial coverage:** OISST lon −115.875 to −105.875, lat 22.125 to 31.625 (Gulf of California). Three Pacific-facing MPAs fall outside this bbox and show no SST or MHW data.
+
+The remaining ~40 MPA polygons on the map have no LTEM data — they show a muted style and a "No LTEM data" tooltip. In production the AI orchestrator would query the MCPs on demand.
 
 ### CONAPESCA CPUE data
 
@@ -262,32 +321,39 @@ The remaining ~40 MPA polygons on the map exist but have no LTEM data — they s
 - Aggregated to: region × year × fleet (MENORES / MAYORES)
 - All-species aggregate: total kg ÷ total effective fishing days
 - 6 marine regions (Region 5 = inland freshwater, excluded)
-- File: `skills/per-database/conapesca-lfo-regions/references/lfo_region_lookup.csv`
+- Region mapping: `skills/per-database/conapesca-lfo-regions/references/lfo_region_lookup.csv`
+
+### SST / MHW data
+
+- Source: NOAA OISST v2.1 daily (1982–2025)
+- MHW detection: `heatwaveR::ts2clm()` + `detect_event(minDuration=5, maxGap=2)`
+- Baseline period: 1998-01-01 to 2011-12-31
+- Stored as annual summaries: `year`, `heatwave_days`, `mean_temp`
+
+### Chlorophyll-a data
+
+- Source: MODIS-Aqua (via NPP coastal zone dataset), monthly 2004–2023
+- Variable: `mean_npp` (used as Chl-a proxy, mg/m³)
+- Spatial coverage: lon −117.7 to −86.1, lat 14 to 33 (all coastal zone)
+- Stored as annual means per MPA bounding box
 
 ### Data source update frequency
 
-| Source | Update cadence | Who triggers update | Notes |
-|--------|---------------|--------------------:|-------|
-| **LTEM** | Biannual (2× per year) | CBMC science team | Survey seasons are roughly May–June and Oct–Nov. New data arrives as RDS snapshots. |
-| **CONAPESCA** | Annual | CBMC science team | Landings database delivered as annual snapshots (~July each year, covering the prior calendar year). |
-| **SST (OISST)** | Every 15 days (or daily) | Automated ERDDAP pull | Near-real-time satellite data. Can be kept fresh with a scheduled download script. |
-| **Chlorophyll-a (MODIS)** | Every 15 days (or daily) | Automated ERDDAP pull | Same pipeline as SST. 15-day composites reduce cloud gaps in tropical waters. |
+| Source | Update cadence | Who triggers | Notes |
+|--------|---------------|-------------|-------|
+| **LTEM** | Biannual (2× per year) | CBMC science team | Survey seasons May–June and Oct–Nov. Data arrives as RDS snapshots. |
+| **CONAPESCA** | Annual | CBMC science team | Landings delivered as annual snapshots (~July, covering prior calendar year). |
+| **SST (OISST)** | Every 15 days (or daily) | Automated ERDDAP pull | Near-real-time satellite data. |
+| **Chlorophyll-a (MODIS)** | Every 15 days (or daily) | Automated ERDDAP pull | 15-day composites reduce cloud gaps in tropical waters. |
 
-The dashboard does not need a live connection to these sources. The orchestrator pre-computes and caches results; the frontend just renders what the orchestrator returns.
-
-### Future additions (not yet available)
+### Remaining future additions
 
 | Metric | Source | Status |
 |--------|--------|--------|
-| Sea Surface Temperature (SST) | ERDDAP / OISST | Pending local data copy |
-| Chlorophyll-a | ERDDAP / MODIS | Pending local data copy |
-| Net Primary Production (NPP) | ERDDAP / MODIS | Pending local data copy |
-| Reef trophic health (NRSI) | LTEM | Skill exists, data not pre-computed |
+| Reef trophic health (NRSI) | LTEM | Skill exists (`ltem-nrsi-index`); not yet pre-computed in demo |
+| Net Primary Production (NPP) | ERDDAP / MODIS | Data available; skill pending |
 | Species-specific CPUE | CONAPESCA | Requires target-species list per region |
-
-When SST and Chl-a are available, add two more panel sections:
-- **SST Anomaly** chart (°C above/below climatology) — placeholder: teal line at zero
-- **Chlorophyll-a** chart (mg/m³ geometric mean) — placeholder: grey flat line
+| Custom user polygon (AOI) | Any | UI feature; not yet implemented |
 
 ---
 
@@ -301,77 +367,119 @@ When SST and Chl-a are available, add two more panel sections:
   "mpas": { /* GeoJSON FeatureCollection of all MPA polygons */ },
   "grid": { /* GeoJSON FeatureCollection of prosperity grid cells */ },
   "offices": {
-    "nombre_oficina_canonico": ["OFFICE A", "OFFICE B", ...],
-    "lat": [28.4, 27.1, ...],
-    "lon": [-113.5, -110.2, ...],
-    "region_id": [3, 3, ...],
+    "nombre_oficina_canonico": ["OFFICE A", ...],
+    "lat": [28.4, ...],
+    "lon": [-113.5, ...],
+    "region_id": [3, ...],
     "region_name": ["Golfo de California Sur y BCS", ...]
   },
-  "mpa_data": {
-    "Cabo Pulmo": {
-      "ltem_region": "Cabo Pulmo",
-      "conapesca_region_id": 3,
-      "biomass": {
-        "kpi": {
-          "mean_biomass_g_m2": 0.09,       /* value in T/ha — field name legacy */
-          "sd_g_m2": 0.03,
-          "years_included": [2020, 2021, 2022, 2023, 2025],
-          "n_years_in_kpi": 5
-        },
-        "annual_means": {
-          "year": [1999, 2000, ...],
-          "mean_biomass_g_m2": [0.032, 0.061, ...]  /* T/ha values */
-        },
-        "trend": {
-          "year": [1999.0, 1999.5, ...],
-          "fit": [0.028, ...],
-          "lwr": [0.011, ...],
-          "upr": [0.045, ...]
-        },
-        "dev_expl_pct": 74.2
-      },
-      "invertebrates": {
-        "Echinoidea": {
-          "kpi": { "mean_abundance_per_transect": 12.4, ... },
-          "annual_means": { "year": [...], "mean_abundance_per_transect": [...] },
-          "trend": { "year": [...], "fit": [...], "lwr": [...], "upr": [...] }
-        },
-        "Asteroidea": { ... },
-        "Holaxonia": { ... },
-        "Scleractinia": { ... }
-      }
-    }
-  },
-  "cpue_regions": {
-    "1": {
-      "region_name": "Golfo de California Norte",
-      "menores": {
-        "year": [2001, 2002, ...],
-        "cpue": [1150.3, 1210.8, ...],
-        "total_kg": [...],
-        "total_dias": [...]
-      },
-      "mayores": { /* same structure */ },
-      "kpi_menores_mean_cpue": 1284.32,
-      "kpi_mayores_mean_cpue": 8713.04
-    },
-    "2": { ... },
-    "3": { ... },
-    "4": { ... },
-    "6": { ... },
-    "7": { ... }
-  }
+  "mpa_data": { /* see below */ },
+  "cpue_regions": { /* see below */ }
 }
 ```
 
-> **Note on biomass units:** The field is named `mean_biomass_g_m2` for historical reasons but the actual values are in **T/ha** (the LTEM database stores biomass in T/ha). Display as T/ha everywhere. 1 T/ha = 100 g/m².
+### `mpa_data[name]` — per-MPA block
+
+```json
+{
+  "ltem_region": "Cabo Pulmo",
+  "conapesca_region_id": 3,
+
+  "biomass": {
+    "kpi": {
+      "mean_biomass_g_m2": 0.09,        /* T/ha — field name is a legacy artifact */
+      "sd_g_m2": 0.03,
+      "years_included": [2020, 2021, 2022, 2023, 2025],
+      "n_years_in_kpi": 5
+    },
+    "annual_means": {
+      "year": [1999, 2000, ...],
+      "mean_biomass_g_m2": [0.032, 0.061, ...]   /* T/ha */
+    },
+    "trend": {
+      "year": [1999.0, 1999.5, ...],
+      "fit": [0.028, ...],
+      "lwr": [0.011, ...],
+      "upr": [0.045, ...]
+    },
+    "dev_expl_pct": 74.2
+  },
+
+  "functional_groups": {
+    "group_order": ["Depredadores solitarios", "Depredadores en cardúmenes",
+                    "Omnívoros en cardúmen", "Herbívoros en cardúmen",
+                    "Crípticos solitarios", "Planctívoros"],
+    "group_colors": ["#D73027", "#FC8D59", "#FEE08B", "#91BFDB", "#4575B4", "#313695"],
+    "series": {
+      "Depredadores solitarios": {
+        "year": [1999, 2000, ...],
+        "biomass": [0.012, 0.018, ...]   /* T/ha */
+      },
+      /* ... one entry per group ... */
+    }
+  },
+
+  "invertebrates": {
+    "Echinoidea": {
+      "kpi": { "mean_abundance_per_transect": 12.4, "n_years_in_kpi": 5 },
+      "annual_means": { "year": [...], "mean_abundance_per_transect": [...] },
+      "trend": { "year": [...], "fit": [...], "lwr": [...], "upr": [...] }
+    },
+    "Asteroidea": { /* same structure */ },
+    "Holaxonia":  { /* same structure */ },
+    "Scleractinia": { /* same structure */ }
+  },
+
+  "sst": {
+    "kpi_mean_sst_c": 24.3,
+    "kpi_mhw_days_per_yr": 12.4,
+    "kpi_n_events_recent": 3,
+    "kpi_years": "1982–2025",
+    "annual": {
+      "year": [1982, 1983, ...],
+      "heatwave_days": [8, 5, ...],
+      "mean_temp": [23.1, 23.4, ...]
+    }
+  },
+  /* sst is null for MPAs outside GoC bbox */
+
+  "chl": {
+    "kpi_mean_chla_mg_m3": 0.412,
+    "kpi_years": "2004–2023",
+    "annual": {
+      "year": [2004, 2005, ...],
+      "mean_chla": [0.38, 0.44, ...]
+    }
+  }
+  /* chl is null if no MODIS coverage */
+}
+```
+
+### `cpue_regions[region_id]` — CONAPESCA CPUE by region
+
+```json
+{
+  "region_name": "Golfo de California Norte",
+  "menores": {
+    "year": [2001, 2002, ...],
+    "cpue": [1150.3, 1210.8, ...],
+    "total_kg": [...],
+    "total_dias": [...]
+  },
+  "mayores": { /* same structure */ },
+  "kpi_menores_mean_cpue": 1284.32,
+  "kpi_mayores_mean_cpue": 8713.04
+}
+```
 
 ### MPA panel — no-data state
 
 If `demo_data.mpa_data[mpa_name]` is undefined:
 - Show panel header (name + category)
 - Show grey text: `"No precomputed data for this MPA. In production, the AI orchestrator runs the skills on demand."`
-- Do not show any KPI cards or charts
+- Do not render any KPI cards or charts.
+
+> **Note on biomass units:** `mean_biomass_g_m2` is a legacy field name. All values are in **T/ha**. Display as T/ha everywhere.
 
 ---
 
@@ -401,48 +509,50 @@ Font: Inter (system fallback: `system-ui, -apple-system, sans-serif`).
 
 A working proof-of-concept is in `dashboard/demo/`:
 
-- **`demo.html`** — Self-contained interactive map + panel. Loads `demo_data.json` via `fetch()`. Requires a local server (CORS): `python3 -m http.server 8080` from the `demo/` folder, then open `http://localhost:8080/demo.html`.
-- **`demo_data.json`** — Pre-computed data for 12 MPAs (LTEM + CONAPESCA CPUE). 1.1 MB.
+- **`demo.html`** — Self-contained map + panel. Loads `demo_data.json` via `fetch()`. Requires a local server (CORS): `python3 -m http.server 8080` from the `demo/` folder, then open `http://localhost:8080/demo.html`.
+- **`chatMPA-site-standalone.html`** — Full chatMPA site with the demo embedded. Same data and panel logic, same `DEMO_DATA` variable inlined (no server required for the site itself, but the demo section still uses `fetch()` internally).
+- **`demo_data.json`** — Pre-computed data for 12 MPAs (LTEM + CONAPESCA + SST + Chl-a). ~1.1 MB.
 
-The demo uses Leaflet.js for the map and Chart.js for all charts. It is NOT production code — it is a display reference to show engineers the intended layout, chart types, and interaction model.
+The demo uses Leaflet.js for the map and Chart.js 4.x for all charts. It is NOT production code — it is a display reference for engineers.
 
-### What the demo does NOT have yet (future additions):
-- SST and Chl-a panels (data not available locally yet)
+### What the demo does NOT have yet
+
+- Invertebrate time-series charts (4-taxon panels) — data in JSON, UI not rendered in current version
 - NRSI (reef health index) panel
-- Species-specific CPUE
-- User-drawn polygon (custom area of interest)
-- Loading states (currently shows blank until data loads)
+- Species-specific CPUE (only fleet aggregate shown)
+- User-drawn polygon (custom AOI)
+- Loading states (blank until data loads)
 
 ---
 
 ## 8. How the data flows in production
 
-In the production system, data is not pre-computed. The flow is:
+In production, data is not pre-computed. The flow is:
 
-1. User clicks an MPA polygon in the dashboard
+1. User clicks an MPA polygon
 2. Dashboard calls the AI orchestrator with `{mpa_name, conapesca_region_id}`
-3. Orchestrator queries the **LTEM MCP** for biomass and invertebrate data
-4. Orchestrator runs **`ltem-fish-biomass`** skill → biomass KPI + trend
-5. Orchestrator runs **`ltem-invertebrate-abundance`** skill → 4-taxon KPIs + trends
-6. Orchestrator queries **CONAPESCA RDS** for regional CPUE (pre-aggregated by region)
-7. Orchestrator returns JSON matching the structure in §5 above
-8. Dashboard renders the panel
+3. Orchestrator runs **`ltem-fish-biomass`** skill → biomass KPI + trophic breakdown
+4. Orchestrator runs **`ltem-invertebrate-abundance`** skill → 4-taxon KPIs + trends
+5. Orchestrator queries CONAPESCA RDS for regional CPUE
+6. Orchestrator runs **`erddap-sst-anomaly`** skill → SST + MHW annual series
+7. Orchestrator runs **`erddap-chlorophyll`** skill → Chl-a annual series
+8. Orchestrator returns JSON matching the structure in §5
+9. Dashboard renders the panel
 
-The demo short-circuits steps 2–7 by pre-computing everything and embedding it in `demo_data.json`.
+The demo short-circuits steps 2–8 by pre-computing everything in `demo_data.json`.
 
 ---
 
 ## 9. Skills reference
 
-Skills are the fixed analysis contracts that produce all KPI and chart values. Full specs are in `skills/per-database/`:
-
 | Skill folder | What it computes | Panel section |
 |-------------|-----------------|---------------|
-| `ltem-fish-biomass` | Fish biomass T/ha: annual observed means + GAM trend ± CI | §3.2 Card 1, §3.3 |
-| `ltem-invertebrate-abundance` | Abundance per transect for Echinoidea/Asteroidea/Holaxonia/Scleractinia | §3.2 Cards 2+4, §3.5 |
-| `conapesca-cpue` | CPUE kg/day per species per fleet (species-level, for advanced queries) | §3.4 (currently regional aggregate) |
-| `ltem-nrsi-index` | Reef trophic health index (−1 to +1) | Future: §3.x |
-| `erddap-sst-anomaly` | Sea surface temperature anomaly °C | Future: §3.x |
-| `erddap-chlorophyll` | Chlorophyll-a mg/m³ | Future: §3.x |
+| `ltem-fish-biomass` | Biomass T/ha: annual means + GAM trend + trophic group breakdown | §3.2 Card 1, §3.3 |
+| `ltem-invertebrate-abundance` | Abundance per transect for 4 taxa | §3.2 Card 2 (Echinoidea KPI) |
+| `conapesca-cpue` | CPUE kg/day per species per fleet | §3.4 (currently regional aggregate) |
+| `conapesca-lfo-regions` | Assigns each MPA to a CONAPESCA region | Pipeline (feeds §3.4) |
+| `erddap-sst-anomaly` | SST °C + MHW annual days (OISST, GoC) | §3.2 Card 5, §3.5.1 |
+| `erddap-chlorophyll` | Chl-a mg/m³ annual mean (MODIS) | §3.2 Card 6, §3.5.2 |
+| `ltem-nrsi-index` | Reef trophic health index (−1 to +1) | Future panel |
 
-Each `SKILL.md` file contains: what question the skill answers, the data it consumes (minimal contract), the fixed method, and example output structure.
+Each `SKILL.md` file contains: what question the skill answers, the data it consumes, the fixed method, and example output structure.
