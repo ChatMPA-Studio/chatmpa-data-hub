@@ -1,0 +1,28 @@
+{
+  "_comment": "Reference values for ltem-fish-biomass skill at Cabo Pulmo (benchmark MPA). Used for validation — output must be within tolerance. Values extracted from LTEM survey data (Cabo Pulmo is the best-monitored and most-recovered MPA in the Pacific Mexico system).",
+  "_source": "LTEM monitoring data, verified 2026-08",
+  "_units": "T/ha (tonnes per hectare). Note: internal LTEM database stores biomass in T/ha.",
+  "site": "Cabo Pulmo",
+  "ltem_region": "Cabo Pulmo",
+  "validation": {
+    "kpi_mean_biomass_tpha": {
+      "value": 0.09,
+      "tolerance_pct": 20,
+      "description": "5-year mean fish biomass. Cabo Pulmo shows some of the highest values among monitored Mexican MPAs. Reference: ~0.09 T/ha (≈ 9 g/m²). Compare: adjacent unprotected reefs typically 0.005–0.015 T/ha."
+    },
+    "trend_direction": {
+      "value": "positive",
+      "description": "Fish biomass at Cabo Pulmo has shown a positive recovery trend since full protection was established (1995). GAM trend should be non-decreasing across the time series."
+    },
+    "min_survey_years": {
+      "value": 15,
+      "description": "Cabo Pulmo has one of the longest time series in the LTEM network. Expect ≥15 annual survey years in the database."
+    }
+  },
+  "context": {
+    "protection_year": 1995,
+    "recovery_description": "Cabo Pulmo is the gold standard of MPA recovery in Mexico. A 2011 Science paper (Aburto-Oropeza et al.) documented a 463% increase in fish biomass relative to adjacent unprotected reefs 10 years after full protection.",
+    "dominant_families": ["Lutjanidae", "Serranidae", "Haemulidae"],
+    "note_haemulidae": "Haemulidae (grunts) are excluded from the functional group breakdown per LTEM protocol (colonial schooling species that inflate biomass estimates), but included in total biomass."
+  }
+}

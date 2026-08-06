@@ -1,0 +1,54 @@
+{
+  "_comment": "Reference values for ltem-invertebrate-abundance skill at Cabo Pulmo. Used for validation — output must be within tolerance. Four focal taxa: Echinoidea, Asteroidea, Holaxonia, Scleractinia.",
+  "_source": "LTEM monitoring data, verified 2026-08",
+  "_units": "individuals per transect (ind./transect). Each transect is 25m × 2m = 50 m².",
+  "site": "Cabo Pulmo",
+  "ltem_region": "Cabo Pulmo",
+  "taxa": {
+    "Echinoidea": {
+      "common_name": "Sea urchins",
+      "ecological_role": "Reef grazers. Control algal growth. At high density can cause destructive grazing (urchin barrens). At Cabo Pulmo, kept in balance by predators.",
+      "kpi_mean_abundance_per_transect": {
+        "value": 12.0,
+        "tolerance_pct": 40,
+        "description": "Mean sea urchin abundance per transect. Values 5–20 ind./transect are typical for healthy Pacific Mexico reefs. High values (>30) may indicate predator depletion."
+      },
+      "trend_direction": "variable",
+      "notes": "Echinoidea abundance at Cabo Pulmo shows interannual variability — no strong directional trend expected."
+    },
+    "Asteroidea": {
+      "common_name": "Sea stars",
+      "ecological_role": "Mesopredators. Predators of bivalves and urchins. Sensitive to disease (sea star wasting syndrome affected Pacific populations ~2013–2016). Indicator of food web integrity.",
+      "kpi_mean_abundance_per_transect": {
+        "value": 2.5,
+        "tolerance_pct": 50,
+        "description": "Mean sea star abundance per transect. Asteroidea are naturally low-density; values 1–5 ind./transect are typical."
+      },
+      "trend_direction": "variable",
+      "notes": "Sea star populations are sensitive to disease events. Accept high variability."
+    },
+    "Holaxonia": {
+      "common_name": "Gorgonian corals (sea fans)",
+      "ecological_role": "Structural habitat builders. Provide shelter for fish and invertebrates. Sensitive to thermal stress and sedimentation. Long-lived (decades to centuries).",
+      "kpi_mean_abundance_per_transect": {
+        "value": 8.0,
+        "tolerance_pct": 40,
+        "description": "Mean gorgonian colony count per transect. Cabo Pulmo supports notable gorgonian populations — values 5–15 colonies/transect are plausible for this site."
+      },
+      "trend_direction": "stable_to_positive",
+      "notes": "Holaxonia at Cabo Pulmo expected stable or slightly increasing with continued protection."
+    },
+    "Scleractinia": {
+      "common_name": "Stony corals (hard corals)",
+      "ecological_role": "Reef builders. The calcium carbonate skeleton forms the physical reef structure. Cover and abundance are key indicators of reef health. Bleach under thermal stress.",
+      "kpi_mean_abundance_per_transect": {
+        "value": 4.0,
+        "tolerance_pct": 50,
+        "description": "Mean stony coral colony count per transect. Cabo Pulmo is at the poleward range edge of tropical coral reefs — naturally lower coral cover than Caribbean or tropical Pacific sites."
+      },
+      "trend_direction": "variable",
+      "notes": "Scleractinia are sensitive to bleaching events. High interannual variability expected. Cabo Pulmo experienced bleaching events in 2015 and 2023 — expect dips in those years."
+    }
+  },
+  "aggregation_note": "These are region-level means (all reefs in the Cabo Pulmo LTEM region averaged). Individual reef values vary considerably. Transect = 25m × 2m band. Abundance = sum of individuals per transect, then averaged across transects per reef, then averaged across reefs per region-year."
+}

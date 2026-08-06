@@ -16,12 +16,15 @@ docs de gobernanza), así que corre desde esta carpeta igual que en el repo orig
 
 ### per-database (una métrica por fuente)
 
-| Skill | Fuente | Qué responde (trigger) |
-|-------|--------|------------------------|
-| `ltem-nrsi-index` ⭐ | LTEM | Salud trófica de un arrecife (NRSI): ¿sano, degradado o en recuperación? |
-| `conapesca-cpue` | CONAPESCA | Presión pesquera sobre una especie: CPUE como serie de tiempo, regional y local. |
-| `erddap-sst-anomaly` | ERDDAP (OISST) | Anomalías de SST y calentamiento en una AMP y su LME. |
-| `erddap-chlorophyll` | ERDDAP (MODIS/VIIRS) | Productividad primaria: media geométrica y anomalías de Chl-a. |
+| Skill | Fuente | Qué responde (trigger) | Demo |
+|-------|--------|------------------------|------|
+| `ltem-nrsi-index` ⭐ | LTEM | Salud trófica de un arrecife (NRSI): ¿sano, degradado o en recuperación? | KPI + plot |
+| `ltem-fish-biomass` | LTEM | Biomasa de peces (T/ha): media y tendencia GAM. ¿Está recuperándose el arrecife? | KPI + plot |
+| `ltem-invertebrate-abundance` | LTEM | Abundancia de 4 grupos de invertebrados (Echinoidea, Asteroidea, Holaxonia, Scleractinia). | KPI + plot |
+| `conapesca-cpue` | CONAPESCA | Presión pesquera sobre una especie: CPUE como serie de tiempo, regional y local. | KPI + plot |
+| `conapesca-lfo-regions` | CONAPESCA | Asigna cada AMP a una región pesquera CONAPESCA por oficina más cercana. | pipeline |
+| `erddap-sst-anomaly` | ERDDAP (OISST) | Anomalías de SST y calentamiento en una AMP y su LME. | KPI + plot |
+| `erddap-chlorophyll` | ERDDAP (MODIS/VIIRS) | Productividad primaria: media geométrica y anomalías de Chl-a. | KPI + plot |
 
 ⭐ `ltem-nrsi-index` es el "gold standard" (el ejemplo completo a copiar).
 
