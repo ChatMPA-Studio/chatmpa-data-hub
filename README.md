@@ -13,6 +13,14 @@ chatMPA-data-hub/
 ├── requirements.txt
 ├── .gitignore
 ├── credentials_AWS.csv         # credenciales REALES de AWS/RDS (NO se sube — gitignored)
+├── dashboard/                  # spec y demo del panel de visualización
+│   ├── DASHBOARD.md            # spec completa para ingenieros (layout, KPIs, charts, JSON schema)
+│   ├── display_spec.json       # spec KPI/plot legible por máquina, un entry por skill
+│   └── demo/
+│       ├── README.md           # cómo correr el demo localmente
+│       ├── demo.html           # mapa + panel interactivo (Leaflet + Chart.js)
+│       ├── demo_data.json      # datos pre-computados para 12 AMPs (~1.1 MB)
+│       └── chatMPA-site-standalone.html  # sitio completo con demo embebido
 ├── docs/
 │   ├── mcp_connection.example.md # config MCP con placeholder (SE SUBE)
 │   └── mcp_connection.md         # config MCP con token real (NO se sube — gitignored)
@@ -98,5 +106,6 @@ Ver `docs/mcp_connection.md` para el detalle de conexión.
 - [x] Credenciales RDS de LTEM y CONAPESCA (en `credentials_AWS.csv`, gitignored).
 - [x] Conexión a MCPs documentada en `docs/mcp_connection.md` (config lista para pegar).
 - [x] Consolidar AMPs → `data/MPAs/chatmpa_amps.gpkg`.
-- [x] Skills en `skills/` (5 skills desde `ChatMPA-Studio/chatmpa-mvp` — ver `skills/README.md`).
+- [x] Skills en `skills/` (ver `skills/README.md`): ltem-fish-biomass, ltem-invertebrate-abundance, conapesca-cpue, conapesca-lfo-regions, erddap-sst-anomaly, erddap-chlorophyll, ltem-nrsi-index, reef-drivers-lm.
+- [x] Dashboard spec + demo en `dashboard/` — panel de 6 KPIs, gráfica de grupos tróficos, MHW y Chl-a para 12 AMPs.
 - [ ] Integrar skills con el resto del hub (compartir geometrías/descargas ERDDAP).
