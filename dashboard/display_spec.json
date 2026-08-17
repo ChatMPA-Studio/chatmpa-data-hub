@@ -1,6 +1,28 @@
 {
   "_comment": "Machine-readable KPI + plot spec for the chatMPA dashboard. Engineers use this to know what to render per skill. Biomass unit is T/ha (1 T/ha = 100 g/m²). See DASHBOARD.md for full display guidance.",
-  "_generated": "2026-08-06",
+  "_generated": "2026-08-12",
+  "_interpretation_schema": {
+    "_note": "Every skill now returns an 'interpretation' block alongside its numerical output. Schema is identical across all skills except conapesca-cpue (which has per-fleet sub-blocks under 'menores' / 'mayores'). Fields:",
+    "before_period": "integer[2] — c(year_start, year_end) of the reference period",
+    "after_period":  "integer[2] — c(year_start, year_end) of the recent period",
+    "metric_before": "numeric — mean of the primary KPI metric in the before period",
+    "metric_after":  "numeric — mean in the after period",
+    "delta":         "numeric — after_mean − before_mean (native units)",
+    "pct_change":    "numeric — (delta / |before|) × 100, or null if before ≈ 0",
+    "direction":     "string — 'increasing' | 'decreasing' | 'stable'",
+    "status":        "string — 'positive' | 'neutral' | 'negative' | 'ambiguous'",
+    "significance":  "object — Mann-Kendall result: {method, tau, p, direction} or {status: 'insufficient_data'}",
+    "stress_years_recent": "(SST only) integer — count of recent years exceeding +0.5°C anomaly threshold",
+    "insight_es":    "string — one-sentence Spanish ecological insight",
+    "insight_en":    "string — one-sentence English ecological insight",
+    "_status_logic": {
+      "ltem-fish-biomass":    "positive if increasing + MK p<0.10; negative if decreasing + p<0.10; else neutral",
+      "ltem-nrsi-index":      "positive if after>0 AND increasing; negative if after<-0.15 OR (delta<-0.1 AND p<0.10); else neutral",
+      "erddap-sst-anomaly":   "negative if ≥3 of last 5 years exceed +0.5°C; positive if ≤0 stress years AND |delta|≤0.1°C; else neutral",
+      "erddap-chlorophyll":   "always ambiguous — direction alone not ecological signal",
+      "conapesca-cpue":       "always ambiguous — CPUE paradox: declining CPUE may reflect effort change or stock depletion"
+    }
+  },
   "skills": [
     {
       "skill": "ltem-fish-biomass",
