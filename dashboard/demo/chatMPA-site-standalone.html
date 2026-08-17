@@ -2939,20 +2939,33 @@ html { scroll-behavior: smooth; }
   background: #F1F4F5; color: #808E97;
 }
 .demo-panel-content::-webkit-scrollbar-thumb { background: #CAD2D7; border-radius: 4px; }
+.demo-panel-header-badge.office { background: #F6E9CF; color: #C6892A; }
+.demo-species-selector { padding: 10px 18px; border-top: 1px solid #E4E9EC; display: flex; flex-wrap: wrap; gap: 5px; }
+.demo-species-pill {
+  font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+  border: 1px solid #CBDAE8; background: #fff; color: #44545E; cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.demo-species-pill.active { background: #0B2338; color: #fff; border-color: #0B2338; }
+.demo-coming-soon {
+  margin: 12px 0 0; padding: 12px 14px; background: #F1F4F5; border-radius: 6px;
+  font-size: 11px; color: #808E97; text-align: center; line-height: 1.5;
+}
+.demo-coming-soon strong { color: #44545E; display: block; margin-bottom: 3px; }
 </style>
 
 <div class="demo-topbar">
   <span class="demo-topbar-title">MPA Explorer</span>
   <span class="demo-topbar-tag">Live Data Demo</span>
   <span class="demo-topbar-sep"></span>
-  <span class="demo-topbar-hint">Click an MPA polygon to explore ecological &amp; fisheries data</span>
+  <span class="demo-topbar-hint">Click an MPA polygon for ecology · Click a fishing office for fisheries data</span>
 </div>
 <div class="demo-main">
   <div id="demo-map"></div>
   <div class="demo-panel">
     <div class="demo-panel-empty" id="demoPanelEmpty">
       <div class="demo-panel-empty-icon">🗺</div>
-      <p>Select an MPA polygon on the map to view LTEM ecological data and CONAPESCA fishing context.</p>
+      <p>Click an <strong>MPA polygon</strong> for ecological data, or a <strong>fishing office dot</strong> for CONAPESCA fisheries data.</p>
     </div>
     <div class="demo-panel-content" id="demoPanelContent"></div>
   </div>
@@ -3250,6 +3263,7 @@ var DEMO_DATA = {"generated":"2026-08-06T18:03:27Z","mpas":{"type":"FeatureColle
     <h3>${name}</h3>
     <p>${props.categoria || ''}${hasData && mpaData.ltem_region ? ' &nbsp;·&nbsp; LTEM: ' + mpaData.ltem_region : ''}</p>
   `;
+  // ↑ Panel A: LTEM + environmental data only. Fisheries data → click a fishing office dot.
   el.appendChild(hdr);
 
   if (!hasData) {
@@ -3265,16 +3279,9 @@ var DEMO_DATA = {"generated":"2026-08-06T18:03:27Z","mpas":{"type":"FeatureColle
   const sstData = mpaData.sst;
   const chlData = mpaData.chl;
   const invEchi = mpaData.invertebrates?.Echinoidea?.kpi;
-  const regLabels = {1:'GoC Norte',2:'Pac. Baja Norte',3:'GoC Sur y BCS',
-    4:'Pac. Nayarit-Guerrero',6:'Pac. Central',7:'Pac. Sur'};
-  const regionLabel = regLabels[mpaData.conapesca_region_id] || '';
-  const rid     = String(mpaData.conapesca_region_id);
-  const cpueReg = DATA.cpue_regions?.[rid];
-  const kpiMen  = cpueReg ? cpueReg.kpi_menores_mean_cpue : null;
-  const kpiMay  = cpueReg ? cpueReg.kpi_mayores_mean_cpue : null;
   const fmtVal  = (v, dec, fallback='—') => v != null ? (+v).toFixed(dec) : fallback;
 
-  // KPI grid — 6 cards
+  // KPI grid — 5 cards (3+2): LTEM + environmental only. CONAPESCA → office panel.
   const kpiEl = document.createElement('div');
   kpiEl.className = 'demo-kpi-grid';
   kpiEl.innerHTML = `
@@ -3291,22 +3298,16 @@ var DEMO_DATA = {"generated":"2026-08-06T18:03:27Z","mpas":{"type":"FeatureColle
       <div class="demo-kpi-card-sub">Echinoidea · LTEM</div>
     </div>
     <div class="demo-kpi-card">
-      <div class="demo-kpi-card-label">Art. CPUE</div>
-      <div class="demo-kpi-card-value">${fmtVal(kpiMen, 0)}</div>
-      <div class="demo-kpi-card-unit">kg / eff. day</div>
-      <div class="demo-kpi-card-sub">MENORES · 5-yr · ${regionLabel || '—'}</div>
-    </div>
-    <div class="demo-kpi-card">
-      <div class="demo-kpi-card-label">Ind. CPUE</div>
-      <div class="demo-kpi-card-value">${fmtVal(kpiMay, 0)}</div>
-      <div class="demo-kpi-card-unit">kg / eff. day</div>
-      <div class="demo-kpi-card-sub">MAYORES · 5-yr · ${regionLabel || '—'}</div>
+      <div class="demo-kpi-card-label">Reef Health</div>
+      <div class="demo-kpi-card-value" style="font-size:13px;color:#808E97">coming soon</div>
+      <div class="demo-kpi-card-unit">NRSI index</div>
+      <div class="demo-kpi-card-sub">−1 depleted → +1 pristine</div>
     </div>
     <div class="demo-kpi-card">
       <div class="demo-kpi-card-label">SST</div>
       <div class="demo-kpi-card-value">${sstData ? fmtVal(sstData.kpi_mean_sst_c, 1) : '—'}</div>
       <div class="demo-kpi-card-unit">${sstData ? '°C · OISST' : '<span class="demo-pending-tag">GoC only</span>'}</div>
-      <div class="demo-kpi-card-sub">${sstData ? sstData.kpi_years + ' · ' + fmtVal(sstData.kpi_mhw_days_per_yr,1) + ' MHW days/yr' : 'Outside GoC'}</div>
+      <div class="demo-kpi-card-sub">${sstData ? sstData.kpi_years + ' · ' + fmtVal(sstData.kpi_mhw_days_per_yr,1) + ' MHW days/yr' : 'Outside GoC bbox'}</div>
     </div>
     <div class="demo-kpi-card">
       <div class="demo-kpi-card-label">Chl-a</div>
@@ -3330,29 +3331,7 @@ var DEMO_DATA = {"generated":"2026-08-06T18:03:27Z","mpas":{"type":"FeatureColle
   }
   el.appendChild(bmSection);
 
-  // Fishing Pressure — CPUE
-  const cpueSection = document.createElement('div');
-  cpueSection.className = 'demo-section';
-  if (cpueReg) {
-    cpueSection.innerHTML = `
-      <div class="demo-section-title">Fishing Pressure · <span class="demo-region-badge"><span class="demo-region-dot"></span>${regionLabel}</span></div>
-      <div class="demo-cpue-kpi-row">
-        <div class="demo-kpi-card"><span class="demo-cpue-fleet-label demo-menores">Artisanal</span>
-          <div class="demo-kpi-card-value">${fmtVal(kpiMen,0)}</div>
-          <div class="demo-kpi-card-unit">kg / effective day</div>
-          <div class="demo-kpi-card-sub">MENORES · 5-yr mean</div></div>
-        <div class="demo-kpi-card"><span class="demo-cpue-fleet-label demo-mayores">Industrial</span>
-          <div class="demo-kpi-card-value">${fmtVal(kpiMay,0)}</div>
-          <div class="demo-kpi-card-unit">kg / effective day</div>
-          <div class="demo-kpi-card-sub">MAYORES · 5-yr mean</div></div>
-      </div>
-      <div style="margin-top:10px"><div class="demo-section-title" style="margin-bottom:6px">CPUE Trend 2001–2026</div>
-      <div class="demo-chart-wrap" style="height:130px"><canvas id="demoChartCPUE"></canvas></div></div>
-    `;
-  } else {
-    cpueSection.innerHTML = '<div class="demo-section-title">Fishing Pressure</div><div style="padding:10px;background:#F1F4F5;border-radius:5px;font-size:11px;color:#808E97">No CPUE data cached for this region.</div>';
-  }
-  el.appendChild(cpueSection);
+  // Fishing Pressure removed from MPA panel — click a fishing office dot for CONAPESCA data.
 
   // Marine Environment
   const envSection = document.createElement('div');
@@ -3415,19 +3394,6 @@ var DEMO_DATA = {"generated":"2026-08-06T18:03:27Z","mpas":{"type":"FeatureColle
                   y:{title:{display:true,text:'T/ha',font:{size:10}},ticks:{font:{size:10}},grid:{color:'#F1F4F5'},min:0}}}});
     }
 
-    if (cpueReg && document.getElementById('demoChartCPUE')) {
-      const men=cpueReg.menores, may=cpueReg.mayores, cpueDs=[];
-      if(men) cpueDs.push({label:'Artisanal (MENORES)',data:men.year.map((y,i)=>({x:y,y:men.cpue[i]})),
-        type:'line',borderColor:'#21925F',borderWidth:2,pointRadius:2.5,pointBackgroundColor:'#21925F',fill:false});
-      if(may) cpueDs.push({label:'Industrial (MAYORES)',data:may.year.map((y,i)=>({x:y,y:may.cpue[i]})),
-        type:'line',borderColor:'#C6892A',borderWidth:2,pointRadius:2.5,pointBackgroundColor:'#C6892A',fill:false,borderDash:[4,3]});
-      new Chart(document.getElementById('demoChartCPUE'),{type:'line',data:{datasets:cpueDs},
-        options:{responsive:true,maintainAspectRatio:false,
-          plugins:{legend:{display:true,position:'bottom',labels:{font:{size:9},boxWidth:12,padding:8}},tooltip:{mode:'index',intersect:false}},
-          scales:{x:{type:'linear',ticks:{font:{size:9},maxTicksLimit:6},grid:{color:'#F1F4F5'}},
-                  y:{title:{display:true,text:'kg/day',font:{size:9}},ticks:{font:{size:9}},grid:{color:'#F1F4F5'},min:0}}}});
-    }
-
     if (sstData && document.getElementById('demoChartMHW')) {
       const ann=sstData.annual;
       new Chart(document.getElementById('demoChartMHW'),{type:'bar',
@@ -3457,6 +3423,122 @@ var DEMO_DATA = {"generated":"2026-08-06T18:03:27Z","mpas":{"type":"FeatureColle
     }
 
   }); // end rAF
+}
+
+// ── Panel B: Fisheries Office ──────────────────────────────────────────────
+function showOfficePanel(officeName, regionId, regionName, DATA) {
+  document.getElementById('demoPanelEmpty').style.display = 'none';
+  const el = document.getElementById('demoPanelContent');
+  el.classList.add('visible');
+  el.innerHTML = '';
+  Object.values(Chart.instances).forEach(c => c.destroy());
+
+  const rid     = String(regionId);
+  const cpueReg = DATA.cpue_regions?.[rid];
+  const fmtVal  = (v, dec, fallback='—') => v != null ? (+v).toFixed(dec) : fallback;
+  const RCOL    = {1:'#1E9EC4',2:'#0B2338',3:'#21925F',4:'#C6892A',6:'#7C5A93',7:'#CC4C43'};
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'demo-panel-header';
+  hdr.innerHTML = `
+    <div class="demo-panel-header-badge office">Fisheries Office</div>
+    <h3>${officeName}</h3>
+    <p><span class="demo-region-badge"><span class="demo-region-dot" style="background:${RCOL[regionId]||'#808E97'}"></span>${regionName}</span></p>
+  `;
+  el.appendChild(hdr);
+
+  // Species / group selector
+  const sel = document.createElement('div');
+  sel.className = 'demo-species-selector';
+  const pills = [
+    {value:'all', label:'All species'},
+    {value:'pelagicos_menores', label:'Pelágicos menores'},
+    {value:'pelagicos_mayores', label:'Pelágicos mayores'},
+    {value:'demersales',        label:'Demersales'},
+    {value:'escama',            label:'Escama'},
+    {value:'invertebrados',     label:'Invertebrados'},
+  ];
+  sel.innerHTML = pills.map((p,i) =>
+    `<button class="demo-species-pill${i===0?' active':''}" data-val="${p.value}">${p.label}</button>`
+  ).join('');
+  el.appendChild(sel);
+  sel.querySelectorAll('.demo-species-pill').forEach(btn => {
+    btn.addEventListener('click', function() {
+      sel.querySelectorAll('.demo-species-pill').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      // All selections show fleet aggregate in demo — species-level data via Carolina's skills
+    });
+  });
+
+  if (!cpueReg) {
+    const nd = document.createElement('div');
+    nd.style.cssText = 'padding:24px 20px;color:#808E97;font-size:13px;';
+    nd.textContent = 'No CPUE data for this region in the current demo.';
+    el.appendChild(nd);
+    return;
+  }
+
+  const kpiMen = cpueReg.kpi_menores_mean_cpue;
+  const kpiMay = cpueReg.kpi_mayores_mean_cpue;
+
+  // CPUE KPI cards
+  const kpiEl = document.createElement('div');
+  kpiEl.className = 'demo-cpue-kpi-row';
+  kpiEl.style.borderTop = '1px solid #E4E9EC';
+  kpiEl.innerHTML = `
+    <div class="demo-kpi-card">
+      <span class="demo-cpue-fleet-label demo-menores">Artisanal</span>
+      <div class="demo-kpi-card-value">${fmtVal(kpiMen,0)}</div>
+      <div class="demo-kpi-card-unit">kg / eff. day</div>
+      <div class="demo-kpi-card-sub">MENORES · 5-yr mean</div>
+    </div>
+    <div class="demo-kpi-card">
+      <span class="demo-cpue-fleet-label demo-mayores">Industrial</span>
+      <div class="demo-kpi-card-value">${fmtVal(kpiMay,0)}</div>
+      <div class="demo-kpi-card-unit">kg / eff. day</div>
+      <div class="demo-kpi-card-sub">MAYORES · 5-yr mean</div>
+    </div>
+  `;
+  el.appendChild(kpiEl);
+
+  // CPUE trend chart
+  const cpueSection = document.createElement('div');
+  cpueSection.className = 'demo-section';
+  cpueSection.innerHTML = `
+    <div class="demo-section-title">CPUE Trend 2001–2026</div>
+    <div class="demo-chart-wrap" style="height:140px"><canvas id="demoChartOfficeCPUE"></canvas></div>
+    <div class="demo-env-note">Regional aggregate · CONAPESCA · ${regionName}</div>
+  `;
+  el.appendChild(cpueSection);
+
+  // Economic KPIs placeholder
+  const econ = document.createElement('div');
+  econ.className = 'demo-section';
+  econ.innerHTML = `
+    <div class="demo-section-title">Economic Indicators</div>
+    <div class="demo-coming-soon">
+      <strong>Coming soon</strong>
+      Economic KPIs under development by Carolina — landed value, revenue per fisher, employment dependency index.
+    </div>
+  `;
+  el.appendChild(econ);
+
+  // Render CPUE chart
+  requestAnimationFrame(function() {
+    const men = cpueReg.menores, may = cpueReg.mayores, ds = [];
+    if (men) ds.push({label:'Artisanal (MENORES)',data:men.year.map((y,i)=>({x:y,y:men.cpue[i]})),
+      type:'line',borderColor:'#21925F',borderWidth:2,pointRadius:2,pointBackgroundColor:'#21925F',fill:false});
+    if (may) ds.push({label:'Industrial (MAYORES)',data:may.year.map((y,i)=>({x:y,y:may.cpue[i]})),
+      type:'line',borderColor:'#C6892A',borderWidth:2,pointRadius:2,pointBackgroundColor:'#C6892A',fill:false,borderDash:[4,3]});
+    const cvs = document.getElementById('demoChartOfficeCPUE');
+    if (cvs) new Chart(cvs, {type:'line', data:{datasets:ds},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:'bottom',labels:{font:{size:9},boxWidth:12,padding:8}},
+          tooltip:{mode:'index',intersect:false}},
+        scales:{x:{type:'linear',ticks:{font:{size:9},maxTicksLimit:7},grid:{color:'#F1F4F5'}},
+                y:{title:{display:true,text:'kg/day',font:{size:9}},ticks:{font:{size:9}},grid:{color:'#F1F4F5'},min:0}}}});
+  });
 }
 
 function initDemoMap() {
@@ -3518,10 +3600,16 @@ function initDemoMap() {
       for (var i=0;i<lats.length;i++) {
         if (!lats[i]||!lons[i]) continue;
         var col=REGION_COLORS[rids[i]]||'#808E97';
-        L.circleMarker([lats[i],lons[i]],{radius:4.5,fillColor:col,color:'#fff',
-          weight:1.2,opacity:1,fillOpacity:0.85})
-          .bindTooltip('<strong>'+names[i]+'</strong><br>'+rnames[i],{sticky:true})
-          .addTo(officeLayer);
+        (function(name,rid,rname,color){
+          L.circleMarker([lats[i],lons[i]],{radius:4.5,fillColor:color,color:'#fff',
+            weight:1.2,opacity:1,fillOpacity:0.85})
+            .bindTooltip('<strong>'+name+'</strong><br><span style="font-size:10px;color:#808E97">'+rname+'</span>',{sticky:true})
+            .on('click', function() {
+              if (_selectedLayer) { _selectedLayer.setStyle(mpaStyle(_selectedLayer.feature)); _selectedLayer=null; }
+              showOfficePanel(name, rid, rname, DATA);
+            })
+            .addTo(officeLayer);
+        })(names[i], rids[i], rnames[i], col);
       }
     }
     officeLayer.addTo(map);
