@@ -1,6 +1,7 @@
 {
   "_comment": "Machine-readable KPI + plot spec for the chatMPA dashboard. Engineers use this to know what to render per skill. Biomass unit is T/ha (1 T/ha = 100 g/m²). See DASHBOARD.md for full display guidance.",
-  "_generated": "2026-08-12",
+  "_generated": "2026-08-17",
+  "_design_change": "MPA panel and Fisheries Office panel are now separate. CONAPESCA CPUE moved entirely to Panel B (office click). MPA panel (Panel A) shows only LTEM + environmental data. Panel B adds species/group selector and economic KPI placeholders.",
   "_interpretation_schema": {
     "_note": "Every skill now returns an 'interpretation' block alongside its numerical output. Schema is identical across all skills except conapesca-cpue (which has per-fleet sub-blocks under 'menores' / 'mayores'). Fields:",
     "before_period": "integer[2] — c(year_start, year_end) of the reference period",
@@ -143,28 +144,40 @@
     {
       "skill": "conapesca-cpue",
       "source": "CONAPESCA RDS (aggregated by region)",
+      "panel": "B",
       "display": "both",
+      "species_selector": {
+        "type": "pill_toggle",
+        "default": "all",
+        "options": [
+          { "value": "all",               "label_es": "Todas las especies",  "description": "Fleet aggregate — all species combined" },
+          { "value": "pelagicos_menores",  "label_es": "Pelágicos menores",   "description": "Sardine, mackerel, anchovy" },
+          { "value": "pelagicos_mayores",  "label_es": "Pelágicos mayores",   "description": "Tuna, swordfish, marlin" },
+          { "value": "demersales",         "label_es": "Demersales",          "description": "Snapper, grouper, corvina" },
+          { "value": "escama",             "label_es": "Escama",              "description": "General finfish" },
+          { "value": "invertebrados",      "label_es": "Invertebrados",       "description": "Shrimp, octopus, sea cucumber, urchin" }
+        ],
+        "note": "Species-level data available once Carolina's skills are integrated. Render selector UI now; use fleet aggregate for all selections in demo."
+      },
       "kpi": {
         "fleets": [
           {
             "fleet": "MENORES",
             "label": "ART. CPUE",
-            "panel_card_index": 3,
             "metric": "kpi_menores_mean_cpue",
             "unit": "kg / eff. day",
             "format": "toFixed(0)",
-            "sub": "MENORES · 5-yr · {region_name}",
+            "sub": "MENORES · 5-yr mean",
             "color": "#21925F",
             "tag_bg": "#DBEFE5"
           },
           {
             "fleet": "MAYORES",
             "label": "IND. CPUE",
-            "panel_card_index": 4,
             "metric": "kpi_mayores_mean_cpue",
             "unit": "kg / eff. day",
             "format": "toFixed(0)",
-            "sub": "MAYORES · 5-yr · {region_name}",
+            "sub": "MAYORES · 5-yr mean",
             "color": "#C6892A",
             "tag_bg": "#F6E9CF"
           }
@@ -175,15 +188,28 @@
         "title": "CPUE Trend 2001–2026",
         "y_axis_label": "kg / effective day",
         "y_min": 0,
+        "height_px": 150,
         "series": [
           { "id": "menores", "label": "Artisanal (MENORES)", "source_field": "menores.cpue", "x_field": "menores.year", "color": "#21925F", "line_style": "solid",  "dash_pattern": null, "width_px": 1.8 },
           { "id": "mayores", "label": "Industrial (MAYORES)", "source_field": "mayores.cpue", "x_field": "mayores.year", "color": "#C6892A", "line_style": "dashed", "dash_pattern": [4,3], "width_px": 1.8 }
         ],
-        "height_px": 130,
+        "note": "Regional aggregate · CONAPESCA · {region_name}",
         "scale": "CONAPESCA fishing region"
       },
+      "economic_kpis": {
+        "status": "coming_soon",
+        "skills_owner": "Carolina",
+        "placeholder_text_es": "Indicadores económicos en desarrollo.",
+        "placeholder_text_en": "Economic indicators coming soon — skills in development.",
+        "planned_kpis": [
+          { "id": "landed_value",       "label": "Economic value of catch", "unit": "MXN million/yr" },
+          { "id": "revenue_per_fisher", "label": "Revenue per fisher",      "unit": "MXN/yr" },
+          { "id": "employment",         "label": "Employment (artisanal)",  "unit": "registered fishers" },
+          { "id": "dependency_index",   "label": "Fishing dependency",      "unit": "% of municipal income" }
+        ]
+      },
       "data_path": "cpue_regions.{conapesca_region_id}",
-      "notes": "CPUE is regional, not per-MPA. All MPAs in the same region share the same time series."
+      "notes": "Panel B only — shown when user clicks a fishing office, not an MPA. CPUE is regional, not per-office. All offices in the same region share the same time series."
     },
     {
       "skill": "erddap-sst-anomaly",
@@ -306,19 +332,28 @@
       "notes": "Skill exists (ltem-nrsi-index). Not pre-computed in current demo_data.json."
     }
   ],
-  "panel_section_order": [
+  "panel_A_section_order": [
     "header",
     "kpi_grid",
     "ltem-fish-biomass",
-    "conapesca-cpue",
     "marine-environment"
   ],
-  "kpi_card_order": [
-    { "card": 1, "skill": "ltem-fish-biomass",           "metric": "mean_biomass_g_m2",        "unit": "T/ha",       "label": "FISH BIOMASS",  "grid": "3x2" },
-    { "card": 2, "skill": "ltem-invertebrate-abundance", "taxon": "Echinoidea",                 "metric": "mean_abundance_per_transect", "unit": "ind./transect", "label": "INVERTEBRATES" },
-    { "card": 3, "skill": "conapesca-cpue",              "fleet": "MENORES",                    "metric": "kpi_menores_mean_cpue",       "unit": "kg/day",     "label": "ART. CPUE" },
-    { "card": 4, "skill": "conapesca-cpue",              "fleet": "MAYORES",                    "metric": "kpi_mayores_mean_cpue",       "unit": "kg/day",     "label": "IND. CPUE" },
-    { "card": 5, "skill": "erddap-sst-anomaly",          "metric": "kpi_mean_sst_c",            "unit": "°C",         "label": "SST",           "coverage": "GoC only" },
-    { "card": 6, "skill": "erddap-chlorophyll",          "metric": "kpi_mean_chla_mg_m3",       "unit": "mg/m³",      "label": "CHL-A" }
+  "panel_A_kpi_cards": [
+    { "card": 1, "skill": "ltem-fish-biomass",           "metric": "mean_biomass_g_m2",          "unit": "T/ha",          "label": "FISH BIOMASS",  "grid_row": 1 },
+    { "card": 2, "skill": "ltem-invertebrate-abundance", "taxon": "Echinoidea",                   "metric": "mean_abundance_per_transect", "unit": "ind./transect", "label": "INVERTEBRATES", "grid_row": 1 },
+    { "card": 3, "skill": "ltem-nrsi-index",             "metric": "nrsi_mean",                   "unit": "index",         "label": "REEF HEALTH",   "grid_row": 1, "status": "coming_soon" },
+    { "card": 4, "skill": "erddap-sst-anomaly",          "metric": "kpi_mean_sst_c",              "unit": "°C",            "label": "SST",           "grid_row": 2, "coverage": "GoC only" },
+    { "card": 5, "skill": "erddap-chlorophyll",          "metric": "kpi_mean_chla_mg_m3",         "unit": "mg/m³",         "label": "CHL-A",         "grid_row": 2 }
+  ],
+  "panel_B_section_order": [
+    "header",
+    "species_selector",
+    "kpi_row",
+    "conapesca-cpue",
+    "economic-kpis"
+  ],
+  "panel_B_kpi_cards": [
+    { "card": 1, "skill": "conapesca-cpue", "fleet": "MENORES", "metric": "kpi_menores_mean_cpue", "unit": "kg/day", "label": "ART. CPUE" },
+    { "card": 2, "skill": "conapesca-cpue", "fleet": "MAYORES", "metric": "kpi_mayores_mean_cpue", "unit": "kg/day", "label": "IND. CPUE" }
   ]
 }
