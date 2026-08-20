@@ -1,5 +1,7 @@
 ---
 name: erddap-chlorophyll
+version: 0.1.0
+tier: 1
 description: >
   Assess primary productivity and phytoplankton trends at a marine protected
   area and its surrounding Large Marine Ecosystem, reporting annual chlorophyll-a
@@ -7,6 +9,33 @@ description: >
   about ocean productivity near an AMP, upwelling strength, food availability
   for fish communities, nutrient conditions, or how local chlorophyll compares
   to regional patterns.
+inputs: {}
+acquire:
+  - source: payload
+    as: data
+    provider:
+      server: erddap
+      tool: get_data
+      args:
+        variable: chlorophyll
+    columns:
+      - lat
+      - lon
+      - time
+      - chlorophyll
+  - source: payload
+    as: geometry_local
+    type: sf
+    # CONSTRUIR: spatial geometry source pending — blocked on amp_geometry_lookup.csv
+  - source: payload
+    as: geometry_regional
+    type: sf
+    # CONSTRUIR: spatial geometry source pending — blocked on amp_geometry_lookup.csv
+comparable_value: [chl_geomean, anomalia_log10]
+reference: references/cabo_pulmo_chl_reference.json
+validation:
+  params: {}
+depends_on: []
 ---
 
 # ERDDAP Chlorophyll-a — Primary productivity context for MPAs
@@ -122,3 +151,5 @@ A complete chlorophyll analysis includes:
   flagged as high-productivity event; `< -0.3` (roughly 0.5× baseline) flagged
   as low-productivity. Comparison of local vs regional signal noted (local
   upwelling decoupling is common along Baja California).
+
+
