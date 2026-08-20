@@ -9,8 +9,10 @@
 # Dependencies:
 #   shared/spatial_join/spatial_join.R  — clip_to_geometry()
 
-source(file.path(dirname(sys.frame(1)$ofile),
-                 "../../shared/spatial_join/spatial_join.R"))
+source(file.path(
+  if (exists(".skill_dir")) .skill_dir else dirname(sys.frame(1)$ofile),
+  "../../shared/spatial_join/spatial_join.R"
+))
 
 # ── Constants (fixed — do not change without updating SKILL.md) ──────────────
 
