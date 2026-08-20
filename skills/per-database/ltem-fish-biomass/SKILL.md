@@ -1,5 +1,7 @@
 ---
 name: ltem-fish-biomass
+version: 0.1.0
+tier: 2
 description: >
   Assess fish standing stock and recovery trends at a marine protected area,
   reporting mean fish biomass (g/m²) and its temporal trend from the LTEM
@@ -8,6 +10,34 @@ description: >
   how biomass has changed over time, or whether protection has led to biomass
   recovery. Also fires when the user asks for the fish biomass KPI or trend
   at a specific site.
+inputs: {}
+acquire:
+  - source: payload
+    as: data
+    provider:
+      server: ltem
+      tool: get_biomass_data
+      # CONSTRUIR: tool pending — must return reef×year biomass (time, reef, value, region)
+    columns:
+      - time
+      - reef
+      - value
+      - region
+  - source: payload
+    as: data_func
+    required: false
+    provider:
+      server: ltem
+      tool: functional_group_biomass
+    columns:
+      - functional_group
+      - value
+output.table: annual_means
+comparable_value: [mean_biomass_g_m2, se_g_m2]
+reference: references/cabo_pulmo_biomass_reference.json
+validation:
+  params: {}
+depends_on: []
 ---
 
 # LTEM Fish Biomass
@@ -110,3 +140,5 @@ A complete fish biomass analysis includes:
 - Observed annual means ± SE for overlaying on the trend plot.
 - Number of unique reefs and survey years used.
 - Functional-group breakdown for the most recent year (if secondary input provided).
+
+
