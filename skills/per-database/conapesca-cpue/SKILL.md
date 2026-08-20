@@ -1,5 +1,7 @@
 ---
 name: conapesca-cpue
+version: 0.1.0
+tier: 1
 description: >
   Estimate fishing pressure on a target species from CONAPESCA landing records,
   by computing CPUE (catch per unit effort) as a time series at regional and
@@ -7,6 +9,58 @@ description: >
   time for a given species in a given state, how pressure near a marine protected
   area compares with the state-level trend, or which fleet type (industrial vs.
   artisanal) drives landings.
+inputs:
+  species:
+    type: string
+    required: true
+    description: >
+      Canonical scientific name (nombre_cientifico_canonico). Must match the
+      database exactly. Common names such as "pargo" are not accepted.
+  state_filter:
+    type: string
+    required: true
+    description: >
+      State name (nombre_estado). Required for both regional and local scales;
+      office names are not unique across states.
+  office_filter:
+    type: string
+    required: false
+    description: >
+      Landing office name (nombre_oficina) within state_filter. If provided,
+      adds a local-scale CPUE series. If absent, only regional series returned.
+acquire:
+  - source: payload
+    as: data
+    provider:
+      server: conapesca
+      tool: get_landings
+      args:
+        group_by: folio
+      params:
+        especie: nombre_cientifico_canonico
+        estado: nombre_estado
+        oficina: nombre_oficina
+    columns:
+      - folio_aviso
+      - anio_corte
+      - tipo_aviso
+      - nombre_estado
+      - nombre_oficina
+      - nombre_cientifico_canonico
+      - peso_desembarcado_kg
+      - dias_efectivos
+      - dias_efectivos_fuente
+      - flag_fecha_generica
+      - flag_dias_efectivos_sospechoso
+      - flag_periodo_futuro
+comparable_value: [cpue_media, cpue_sd]
+reference: references/cabo_pulmo_cpue_reference.json
+validation:
+  params:
+    species: Lutjanus peru
+    state_filter: BAJA CALIFORNIA SUR
+    office_filter: CABO SAN LUCAS
+depends_on: []
 ---
 
 # CONAPESCA CPUE — Índice de presión pesquera
@@ -173,3 +227,5 @@ A complete CPUE analysis with this skill must include:
 - `n_viajes` and `n_viajes_excluidos` reported per year-fleet cell.
 - Years with n < 5 trips flagged in the narrative.
 - A brief comparison between regional and local trends (convergent / divergent).
+
+
