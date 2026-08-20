@@ -1,5 +1,7 @@
 ---
 name: erddap-sst-anomaly
+version: 0.1.0
+tier: 1
 description: >
   Assess thermal conditions and warming trends at a marine protected area and
   its surrounding Large Marine Ecosystem, reporting annual SST anomalies at
@@ -7,6 +9,35 @@ description: >
   thermal stress on reef communities, El Niño/La Niña impacts on a specific
   protected area, or how local sea surface temperature compares to the regional
   trend.
+inputs: {}
+acquire:
+  - source: payload
+    as: data
+    provider:
+      server: erddap
+      tool: get_data
+      args:
+        variable: sst
+        sst_var: sst
+    columns:
+      - lat
+      - lon
+      - time
+      - sst
+      - anom
+  - source: payload
+    as: geometry_local
+    type: sf
+    # CONSTRUIR: spatial geometry source pending — blocked on amp_geometry_lookup.csv
+  - source: payload
+    as: geometry_regional
+    type: sf
+    # CONSTRUIR: spatial geometry source pending — blocked on amp_geometry_lookup.csv
+comparable_value: [sst_media, anomalia_media]
+reference: references/cabo_pulmo_sst_reference.json
+validation:
+  params: {}
+depends_on: []
 ---
 
 # ERDDAP SST Anomaly — Thermal context for MPAs
@@ -108,3 +139,5 @@ A complete SST anomaly analysis includes:
   flagged as warming signal.
 - Comparison of local vs regional trend: note whether the AMP tracks the LME
   or diverges (local upwelling, coastal effects).
+
+
