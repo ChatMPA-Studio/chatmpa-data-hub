@@ -1,11 +1,39 @@
 ---
 name: ltem-nrsi-index
+version: 0.1.0
+tier: 2
 description: >
   Assess the trophic health of a reef and answer whether it is healthy,
   degraded, or recovering, from the LTEM database. Fires on questions about
   reef trophic balance, apex-predator recovery, overfishing signatures, or
   "is this reef healthy" — by computing the Normalized Reef State Index (NRSI)
   from the relative biomass of upper, lower, and consumer trophic levels.
+inputs:
+  n_boot:
+    type: integer
+    required: false
+    default: 100
+    description: Number of bootstrap replicates for NRSI confidence intervals.
+acquire:
+  - source: payload
+    as: data
+    provider:
+      server: ltem
+      tool: get_nrsi_data
+    columns:
+      - time
+      - value
+      - TrophicLevelF
+      - transect
+      - reef
+      - region
+output.table: nrsi_by_reef
+comparable_value: [nrsi, ci_lo_95, ci_hi_95]
+reference: references/cabo_pulmo_nrsi_reference.json
+validation:
+  params:
+    n_boot: 100
+depends_on: []
 ---
 
 # LTEM Normalized Reef State Index (NRSI)
@@ -102,3 +130,5 @@ A complete NRSI analysis includes:
 - Temporal comparison if multiple years are available.
 - A clear mapping of NRSI values to ecological health categories:
   0.5–1.0 Excellent · 0.0–0.5 Good · -0.5–0.0 Degraded · -1.0–-0.5 Severely degraded.
+
+
