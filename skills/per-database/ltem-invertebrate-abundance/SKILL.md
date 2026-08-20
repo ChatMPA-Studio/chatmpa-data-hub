@@ -1,5 +1,7 @@
 ---
 name: ltem-invertebrate-abundance
+version: 0.1.0
+tier: 2
 description: >
   Assess the abundance and diversity of key invertebrate groups at a marine
   protected area, reporting mean counts and temporal trends for four focal
@@ -9,6 +11,26 @@ description: >
   invertebrates are recovering or declining, echinoderm abundance, or coral
   cover as measured by transect counts. Also fires when the user asks for
   invertebrate KPIs or trends at a specific site.
+inputs: {}
+acquire:
+  - source: payload
+    as: data
+    provider:
+      server: ltem
+      tool: get_invertebrate_data
+      # CONSTRUIR: tool pending — must return reef×year×taxa (time, reef, taxa, value, region)
+    columns:
+      - time
+      - reef
+      - taxa
+      - value
+      - region
+output.table: trend_summary
+comparable_value: [dev_expl_pct, n_years]
+reference: references/cabo_pulmo_invertebrate_reference.json
+validation:
+  params: {}
+depends_on: []
 ---
 
 # LTEM Invertebrate Abundance
@@ -108,3 +130,5 @@ A complete invertebrate abundance analysis includes:
 - Trend: GAM smooth per taxon with 95% CI (lwr clipped at 0) + deviance explained.
 - Observed annual means ± SE per taxon (for overlaying on the trend plot).
 - Species richness per taxon if richness data is present in the input.
+
+
