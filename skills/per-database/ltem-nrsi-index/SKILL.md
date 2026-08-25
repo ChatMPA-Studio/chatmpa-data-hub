@@ -27,7 +27,8 @@ acquire:
       - transect
       - reef
       - region
-output.table: nrsi_by_reef
+output:
+  table: nrsi_by_reef
 comparable_value: [nrsi, ci_lo_95, ci_hi_95]
 reference: references/cabo_pulmo_nrsi_reference.json
 validation:
@@ -130,5 +131,3 @@ A complete NRSI analysis includes:
 - Temporal comparison if multiple years are available.
 - A clear mapping of NRSI values to ecological health categories:
   0.5–1.0 Excellent · 0.0–0.5 Good · -0.5–0.0 Degraded · -1.0–-0.5 Severely degraded.
-
-
