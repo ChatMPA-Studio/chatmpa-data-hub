@@ -32,7 +32,8 @@ acquire:
     columns:
       - functional_group
       - value
-output.table: annual_means
+output:
+  table: annual_means
 comparable_value: [mean_biomass_g_m2, se_g_m2]
 reference: references/cabo_pulmo_biomass_reference.json
 validation:
@@ -140,5 +141,3 @@ A complete fish biomass analysis includes:
 - Observed annual means ± SE for overlaying on the trend plot.
 - Number of unique reefs and survey years used.
 - Functional-group breakdown for the most recent year (if secondary input provided).
-
-
