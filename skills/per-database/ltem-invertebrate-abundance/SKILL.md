@@ -25,9 +25,10 @@ acquire:
       - taxa
       - value
       - region
-output.table: trend_summary
+output:
+  table: trend_summary
 comparable_value: [dev_expl_pct, n_years]
-reference: references/cabo_pulmo_invertebrate_reference.json
+reference: references/cabo_pulmo_inv_reference.json
 validation:
   params: {}
 depends_on: []
@@ -130,5 +131,3 @@ A complete invertebrate abundance analysis includes:
 - Trend: GAM smooth per taxon with 95% CI (lwr clipped at 0) + deviance explained.
 - Observed annual means ± SE per taxon (for overlaying on the trend plot).
 - Species richness per taxon if richness data is present in the input.
-
-
