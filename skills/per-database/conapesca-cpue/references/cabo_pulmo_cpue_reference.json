@@ -1,0 +1,16 @@
+{
+  "status": "PENDING",
+  "skill": "conapesca-cpue",
+  "description": "Reference CPUE values for Lutjanus peru, Baja California Sur. To be verified by science team.",
+  "case": {
+    "species": "Lutjanus peru",
+    "state_filter": "BAJA CALIFORNIA SUR"
+  },
+  "expected": {
+    "cpue_media": null,
+    "cpue_sd": null
+  },
+  "tolerance": null,
+  "verified_by": null,
+  "verified_date": null
+}
