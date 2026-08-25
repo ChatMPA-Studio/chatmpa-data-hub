@@ -12,7 +12,7 @@ description: >
   variation in reef trophic state.
 inputs:
   species:
-    type: string_vector
+    type: array
     required: true
     description: >
       One or more canonical scientific names (nombre_cientifico_canonico).
@@ -38,7 +38,8 @@ acquire:
     skill: erddap-chlorophyll
     as: data_chl
     columns: [year, anomalia_log10]
-output.table: coefficients
+output:
+  table: coefficients
 comparable_value: [r_squared, r_squared_adj]
 reference: references/cabo_pulmo_lm_reference.json
 validation:
@@ -206,5 +207,3 @@ A complete reef-drivers analysis includes:
 - Direction interpretation: sign and magnitude of each coefficient described
   in ecological terms (e.g. "each unit increase in CPUE for *Lutjanus peru*
   MENORES is associated with a decrease of X in NRSI").
-
-
