@@ -9,26 +9,59 @@ description: >
   "is this reef healthy" — by computing the Normalized Reef State Index (NRSI)
   from the relative biomass of upper, lower, and consumer trophic levels.
 inputs:
+  mpa:
+    type: string
+    required: false
+    description: >
+      Nombre del AMP tal como aparece en la BD LTEM (ej. "Cabo Pulmo").
+      Filtra solo arrecifes dentro del polígono del parque.
+      No usar junto con region: el filtro es AND y el resultado sería más
+      restrictivo que cualquiera de los dos solos.
+  region:
+    type: string
+    required: false
+    description: >
+      Región LTEM (ej. "Cabo Pulmo"). Incluye arrecifes dentro Y fuera del AMP.
+      No usar junto con mpa: el filtro es AND y el resultado sería más
+      restrictivo que cualquiera de los dos solos.
+  reef:
+    type: string
+    required: false
+    description: >
+      Nombre de un arrecife específico. Usar solo si la pregunta es
+      a nivel de arrecife concreto.
+  year:
+    type: integer
+    required: false
+    description: >
+      Año de muestreo. Omitir para serie temporal completa.
   n_boot:
     type: integer
     required: false
     default: 100
-    description: Number of bootstrap replicates for NRSI confidence intervals.
+    description: >
+      Bootstrap resamples for 95% CI computation. Range 100–500. Seed is
+      fixed at 42 — CIs are reproducible regardless of n_boot value.
 acquire:
   - source: payload
     as: data
     provider:
       server: ltem
       tool: get_nrsi_data
+      params:
+        mpa:    mpa
+        region: region
+        reef:   reef
+        year:   year
     columns:
       - time
       - value
       - TrophicLevelF
       - transect
       - reef
-      - region
 output:
   table: nrsi_by_reef
+# Bootstrap con seed=42 — determinista. Se comparan NRSI y CIs por reef-year.
 comparable_value: [nrsi, ci_lo_95, ci_hi_95]
 reference: references/cabo_pulmo_nrsi_reference.json
 validation:
