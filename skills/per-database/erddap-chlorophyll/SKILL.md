@@ -9,8 +9,17 @@ description: >
   about ocean productivity near an AMP, upwelling strength, food availability
   for fish communities, nutrient conditions, or how local chlorophyll compares
   to regional patterns.
-inputs: {}
+inputs:
+  mpa:
+    type: string
+    required: false
+    description: >
+      Nombre del AMP tal como aparece en amp_geometry_lookup.csv (ej. "Cabo Pulmo").
+      Usado por skill.R para obtener geometry_local vía get_amp_geometry(mpa).
+      Si se omite, skill.R no puede recortar los datos y fallará.
 acquire:
+  # El orquestador llama al MCP de ERDDAP y manda los datos en el body.
+  # Dataset: erdMH1chla8day_R202SQ (MODIS Aqua 8-day, 4 km).
   - source: payload
     as: data
     provider:
@@ -23,14 +32,12 @@ acquire:
       - lon
       - time
       - chlorophyll
-  - source: payload
-    as: geometry_local
-    type: sf
-    # CONSTRUIR: spatial geometry source pending — blocked on amp_geometry_lookup.csv
-  - source: payload
-    as: geometry_regional
-    type: sf
-    # CONSTRUIR: spatial geometry source pending — blocked on amp_geometry_lookup.csv
+  # geometry_local y geometry_regional NO vienen del orquestador.
+  # skill.R las obtiene internamente:
+  #   geometry_local    <- get_amp_geometry(mpa)      # shared/spatial_join/spatial_join.R
+  #   geometry_regional <- get_lme_geometry(lme_name) # ídem, cached en shared/geometries/lme/
+# Sin `output.table`: run_skill() devuelve un solo data.frame con ambas escalas.
+# Skill determinista — media geométrica log10, sin bootstrap.
 comparable_value: [chl_geomean, anomalia_log10]
 reference: references/cabo_pulmo_chl_reference.json
 validation:
@@ -152,4 +159,29 @@ A complete chlorophyll analysis includes:
   as low-productivity. Comparison of local vs regional signal noted (local
   upwelling decoupling is common along Baja California).
 
+---
 
+## Planned scale architecture — PENDING: gradilla costera
+
+> Este bloque documenta la arquitectura objetivo del MVP. No modifica el
+> contrato actual. Implementar cuando la gradilla esté disponible.
+
+### Cambio de escala local
+- **Actual**: `clip_to_geometry(data, geometry_local)` con polígono del AMP
+- **Planeado**: extraer valores de clorofila en celdas de la gradilla donde `nombre_amp == <amp_name>`
+- Extracción: centroide de cada celda como punto sobre el raster ERDDAP (MODIS 4 km, probablemente más fino que la gradilla)
+- Si se quiere promedio por polígono de celda en lugar del valor puntual, usar extracción por polígono — decisión pendiente
+
+### Cambio de escala regional
+- **Actual**: `clip_to_geometry(data, geometry_regional)` con polígono del LME
+- **Planeado**: extraer valores en celdas de la gradilla donde `region_id == <region>` (de `conapesca-lfo-regions`)
+
+### Lo que NO cambia
+- Fórmula: media geométrica log₁₀, anomalía log₁₀ vs. baseline 2003–2020 — idéntica
+- Regla de cobertura (`cobertura_pct < 50` → NA)
+- Outputs: misma estructura
+
+### Dependencias para implementar
+- [ ] Gradilla costera disponible (sf con `nombre_amp`, `region_id`)
+- [ ] `conapesca-lfo-regions` ejecutado
+- [ ] Decisión: extracción por centroide vs. por polígono de celda
