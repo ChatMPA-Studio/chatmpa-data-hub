@@ -9,8 +9,17 @@ description: >
   thermal stress on reef communities, El Niño/La Niña impacts on a specific
   protected area, or how local sea surface temperature compares to the regional
   trend.
-inputs: {}
+inputs:
+  mpa:
+    type: string
+    required: false
+    description: >
+      Nombre del AMP tal como aparece en amp_geometry_lookup.csv (ej. "Cabo Pulmo").
+      Usado por skill.R para obtener geometry_local vía get_amp_geometry(mpa).
+      Si se omite, skill.R no puede recortar los datos y fallará.
 acquire:
+  # El orquestador llama al MCP de ERDDAP (dos calls: sst y anom) y los manda
+  # en el body fusionados. Dataset: ncdcOisst21Agg_LonPM180 (OISST v2.1, 0.25°).
   - source: payload
     as: data
     provider:
@@ -25,14 +34,13 @@ acquire:
       - time
       - sst
       - anom
-  - source: payload
-    as: geometry_local
-    type: sf
-    # CONSTRUIR: spatial geometry source pending — blocked on amp_geometry_lookup.csv
-  - source: payload
-    as: geometry_regional
-    type: sf
-    # CONSTRUIR: spatial geometry source pending — blocked on amp_geometry_lookup.csv
+  # geometry_local y geometry_regional NO vienen del orquestador.
+  # skill.R las obtiene internamente:
+  #   geometry_local    <- get_amp_geometry(mpa)      # shared/spatial_join/spatial_join.R
+  #   geometry_regional <- get_lme_geometry(lme_name) # ídem, cached en shared/geometries/lme/
+# Sin `output.table`: run_skill() devuelve un solo data.frame con ambas escalas.
+# Skill determinista — media aritmética anual, sin bootstrap.
+# MHW (kpi_mhw_days_per_yr) → skill separada erddap-mhw (issue #8 cerrado).
 comparable_value: [sst_media, anomalia_media]
 reference: references/cabo_pulmo_sst_reference.json
 validation:
@@ -140,4 +148,32 @@ A complete SST anomaly analysis includes:
 - Comparison of local vs regional trend: note whether the AMP tracks the LME
   or diverges (local upwelling, coastal effects).
 
+---
 
+## Planned scale architecture — PENDING: gradilla costera
+
+> Este bloque documenta la arquitectura objetivo del MVP. No modifica el
+> contrato actual. Implementar cuando la gradilla esté disponible.
+
+### Cambio de escala local
+- **Actual**: `clip_to_geometry(data, geometry_local)` con polígono del AMP (sf via `get_amp_geometry()`)
+- **Planeado**: extraer valores SST/anom en las celdas de la gradilla donde `nombre_amp == <amp_name>`
+- La gradilla es un objeto vectorial sf (polígonos), NO un raster
+- Extracción: centroide de cada celda de la gradilla como punto de extracción sobre el raster ERDDAP (resolución OISST 0.25° ≈ 25 km, probablemente más fina que la gradilla)
+- Si se quiere promedio dentro del polígono de cada celda en lugar del valor puntual, usar extracción por polígono en vez de centroide — decisión pendiente
+
+### Cambio de escala regional
+- **Actual**: `clip_to_geometry(data, geometry_regional)` con polígono del LME (sf via `get_lme_geometry()`)
+- **Planeado**: extraer valores SST/anom en las celdas de la gradilla donde `region_id == <region>`, donde `region_id` proviene de `conapesca-lfo-regions`
+- El valor regional de un AMP = promedio de las celdas de la gradilla de su región de manejo
+
+### Lo que NO cambia
+- Fórmula de agregación: `mean(sst)`, `mean(anom)` por año — idéntica
+- Regla de cobertura (`cobertura_pct < 50` → NA)
+- Baseline de anomalía: NOAA 1971–2000 climatología embebida en `anom`
+- Outputs: misma estructura, solo cambia la fuente de la geometría
+
+### Dependencias para implementar
+- [ ] Gradilla costera disponible (objeto sf con columnas `nombre_amp`, `region_id`)
+- [ ] `conapesca-lfo-regions` ejecutado para obtener asignación de región por celda
+- [ ] Decisión: extracción por centroide vs. por polígono de celda
