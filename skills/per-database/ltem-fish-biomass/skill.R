@@ -7,6 +7,11 @@
 # Reference: ltem_report/workshops/datamares/2026/generate_datamares_2026.R
 #            gam_trend() and FIG07 section.
 
+if (!exists("before_after", mode = "function")) {
+  source(file.path(dirname(sys.frame(1)$ofile),
+                   "../../shared/interpretation/interpret.R"))
+}
+
 # ── Constants (fixed — do not change without updating SKILL.md) ──────────────
 
 .K_MAX        <- 10L   # maximum smoothing knots for s(year)
@@ -63,7 +68,7 @@
 #
 # Args:
 #   data      data.frame — reef-year biomass (time, reef, value, region)
-#   data_func data.frame — optional functional-group breakdown (functional_group, value)
+#   data_func data.frame — optional functional-group breakdown (Functional_groups, mean_biomass)
 #
 # Returns: list(value, method, params)
 
@@ -83,6 +88,7 @@ run_skill <- function(data, data_func = NULL, ...) {
     stop("'value' (biomass g/m²) must be numeric.")
 
   data <- data[!is.na(data$value) & !is.na(data$time), ]
+  data$value <- data$value * 0.01   # g/m² → T/ha (1 g/m² = 0.01 T/ha)
 
   n_unique_years <- length(unique(data$time))
   n_reefs        <- length(unique(data$reef))
@@ -98,8 +104,8 @@ run_skill <- function(data, data_func = NULL, ...) {
   kpi_sd     <- sd(annual_kpi, na.rm = TRUE)
 
   kpi <- list(
-    mean_biomass_g_m2  = round(kpi_mean, 2),
-    sd_g_m2            = round(kpi_sd, 2),
+    mean_biomass_t_ha  = round(kpi_mean, 4),
+    sd_t_ha            = round(kpi_sd, 4),
     years_included     = as.integer(kpi_years),
     n_years_in_kpi     = length(kpi_years)
   )
@@ -110,9 +116,9 @@ run_skill <- function(data, data_func = NULL, ...) {
     vals <- data$value[data$time == yr]
     n    <- sum(!is.na(vals))
     data.frame(
-      year             = yr,
-      mean_biomass_g_m2 = round(mean(vals, na.rm = TRUE), 3),
-      se_g_m2          = round(sd(vals, na.rm = TRUE) / sqrt(n), 3),
+      year              = yr,
+      mean_biomass_t_ha = round(mean(vals, na.rm = TRUE), 4),
+      se_t_ha           = round(sd(vals, na.rm = TRUE) / sqrt(n), 4),
       n_reefs           = n
     )
   }))
@@ -143,20 +149,62 @@ run_skill <- function(data, data_func = NULL, ...) {
 
   func_out <- NULL
   if (!is.null(data_func)) {
-    valid_groups <- c("GenPred_solitary", "GenPred_schooling", "EpiBent_schooling",
-                      "Crip_schooling", "Crip_solitary", "Plank")
-    req_func <- c("functional_group", "value")
+    req_func <- c("Functional_groups", "mean_biomass")
     if (!all(req_func %in% names(data_func))) {
-      warning("data_func missing required columns — functional group breakdown skipped.")
+      warning("data_func missing required columns (Functional_groups, mean_biomass) — ",
+              "functional group breakdown skipped.")
     } else {
-      unknown <- setdiff(data_func$functional_group, valid_groups)
-      if (length(unknown) > 0)
-        warning("Unknown functional groups excluded: ", paste(unknown, collapse = ", "))
-      func_out <- data_func[data_func$functional_group %in% valid_groups, ]
-      func_out$biomass_g_m2 <- round(func_out$value, 3)
-      func_out$value        <- NULL
+      func_out <- data_func[, c("Functional_groups", "mean_biomass"), drop = FALSE]
+      names(func_out) <- c("functional_group", "biomass_t_ha")
+      func_out$biomass_t_ha <- round(func_out$biomass_t_ha * 0.01, 4)
     }
   }
+
+  # ── Interpretation ────────────────────────────────────────────────────────
+
+  ba  <- before_after(annual_means, "mean_biomass_t_ha",
+                      before_years = head(all_years, .KPI_YEARS),
+                      recent_n     = .KPI_YEARS)
+  mkt <- mk_trend(annual_means, "mean_biomass_t_ha")
+
+  bio_status <- if (!is.null(ba$status)) "neutral" else {
+    p_val <- if (!is.null(mkt$p)) mkt$p else 1
+    if      (ba$direction == "increasing" && p_val < 0.10) "positive"
+    else if (ba$direction == "decreasing" && p_val < 0.10) "negative"
+    else "neutral"
+  }
+
+  bio_sentences <- if (!is.null(ba$status)) {
+    list(en = NA_character_, es = NA_character_)
+  } else {
+    mk_note_en <- if (!is.null(mkt$p) && mkt$p < 0.10)
+      paste0("Mann-Kendall trend: τ = ", mkt$tau, ", p = ", mkt$p, ".") else NULL
+    mk_note_es <- if (!is.null(mkt$p) && mkt$p < 0.10)
+      paste0("Tendencia Mann-Kendall: τ = ", mkt$tau, ", p = ", mkt$p, ".") else NULL
+    insight_sentence(
+      var_label_en  = "Fish biomass",
+      var_label_es  = "La biomasa de peces",
+      unit          = "T/ha",
+      before_mean   = ba$before_mean, after_mean = ba$after_mean,
+      delta         = ba$delta,       pct_change = ba$pct_change,
+      before_period = ba$before_period, after_period = ba$after_period,
+      extra_en      = mk_note_en,     extra_es   = mk_note_es
+    )
+  }
+
+  interpretation <- list(
+    before_period = ba$before_period,
+    after_period  = ba$after_period,
+    metric_before = ba$before_mean,
+    metric_after  = ba$after_mean,
+    delta         = ba$delta,
+    pct_change    = ba$pct_change,
+    direction     = if (!is.null(ba$direction)) ba$direction else "unknown",
+    status        = bio_status,
+    significance  = mkt,
+    insight_es    = bio_sentences$es,
+    insight_en    = bio_sentences$en
+  )
 
   # ── Return ────────────────────────────────────────────────────────────────
 
@@ -169,6 +217,7 @@ run_skill <- function(data, data_func = NULL, ...) {
       annual_means      = annual_means,
       functional_groups = func_out
     ),
+    interpretation = interpretation,
     method = paste0(
       "KPI: observed mean biomass across most recent ", length(kpi_years), " survey years ",
       "(arithmetic mean of per-year reef means). ",
@@ -187,8 +236,8 @@ run_skill <- function(data, data_func = NULL, ...) {
       gam_family   = "gaussian",
       gam_method   = "REML",
       grid_points  = .GRID_POINTS,
-      unit         = "g/m2",
-      unit_note    = "1 g/m2 = 0.01 T/ha"
+      unit         = "T/ha",
+      unit_note    = "converted from MCP output (g/m²) via × 0.01"
     )
   )
 }
