@@ -10,7 +10,14 @@ description: >
   whether heatwave frequency is increasing over time. Companion skill to
   erddap-sst-anomaly — that skill reports mean temperatures; this one reports
   extreme thermal events.
-inputs: {}
+inputs:
+  mpa:
+    type: string
+    required: false
+    description: >
+      Nombre del AMP tal como aparece en amp_geometry_lookup.csv (ej. "Cabo Pulmo").
+      Usado por skill.R para obtener geometry_local vía get_amp_geometry(mpa).
+      Si se omite, skill.R no puede recortar los datos y fallará.
 acquire:
   # Misma fuente que erddap-sst-anomaly pero con serie diaria completa.
   # El orquestador llama al MCP de ERDDAP y manda los datos en el body.
@@ -24,15 +31,28 @@ acquire:
       args:
         variable: sst
         sst_var: sst
+        # aggregate_spatial=true colapsa lat/lon → media espacial por día.
+        # Devuelve {time:[...], sst:[...]} — 1 fila por día (~16 000 filas).
+        # Elimina el límite de 500 000 puntos y permite date_range de 44 años.
+        aggregate_spatial: true
+      params:
+        # bbox se deriva del polígono del AMP en amp_geometry_lookup.csv.
+        # El orquestador lo resuelve en service.py usando get_amp_geometry().
+        bbox: <derived from AMP polygon at request time>
+        # date_range: inicio fijo 1982-01-01 (lanzamiento OISST v2.1).
+        # fin = fecha actual (rolling window — calculado en service.py al vuelo,
+        # no hardcodear: la serie necesita llegar hasta hoy para detectar MHWs recientes).
+        date_range: ["1982-01-01", "<today>"]
+    # Formato de respuesta: columnar {time, sst} — NO 3D array.
+    # El orquestador convierte a data.frame(time, sst) antes de inyectar.
     columns:
-      - lat
-      - lon
       - time
       - sst
-  - source: payload
-    as: geometry_local
-    type: sf
-# Sin output.table: devuelve un data.frame con la serie anual de MHW metrics.
+  # geometry_local se resuelve internamente en skill.R solo para geometry_source.
+  # No se usa para clip espacial (el bbox ya es el recorte espacial).
+output:
+  table: mhw_annual
+  columns: [year, kpi_mhw_days_per_yr, n_events_per_yr, mean_intensity_per_yr]
 # Skill determinista — el algoritmo heatwaveR es reproducible dado los datos.
 comparable_value: [kpi_mhw_days_per_yr, n_events_per_yr]
 reference: references/cabo_pulmo_mhw_reference.json
@@ -125,8 +145,8 @@ same event detection given fixed parameters.
   as MHWs under the Hobday definition.
 - Do NOT aggregate before Step 1 — the spatial averaging must be done on raw
   pixel-day data, not on annual means.
-- Do NOT report MHW metrics when the baseline period has < 20 years of data —
-  the climatology is unreliable.
+- Do NOT report MHW metrics when the baseline period has < 30 years of data —
+  the climatology is unreliable (WMO standard for climatological normals).
 
 ## Validation checklist
 - [ ] self-consistency: same input → same output across N runs.
