@@ -269,22 +269,30 @@ Triggered when the user clicks a **fishing office dot**. Content is stacked top 
 ├─────────────────────────────────────────────┤
 │ Recurso    [ Todas ▾ ]  ←─ mutuamente       │
 │ Especie    [ Todas ▾ ]  ←─ excluyentes      │  ← filter bar
-│ Año        [ 2001–2026 ▾ ]                  │
 │ Flota      [Mayores] [Menores] [Cosecha]    │
-│ Grupo com. [ coming soon ]                  │
+│ Año        [ 2001 ▾ ] – [ 2026 ▾ ]  libre  │
+│ Grupo comercial [ coming soon ]             │
 ├─────────────────────────────────────────────┤
 │ ── ACTIVIDAD PESQUERA ──                    │
 │                                             │
-│ ┌─────────────────┐ ┌─────────────────┐    │
-│ │ Artisanal       │ │ Industrial      │    │  ← CPUE KPI cards
-│ │ 245 kg/día      │ │ 1,832 kg/día    │    │
-│ │ MENORES · 5yr   │ │ MAYORES · 5yr   │    │
-│ └─────────────────┘ └─────────────────┘    │
+│ ┌──────────────────┐ ┌──────────────────┐  │
+│ │ CPUE             │ │ CPUE             │  │  ← CPUE KPI cards
+│ │ [Artisanal]      │ │ [Industrial]     │  │    label = "CPUE", fleet badge
+│ │ 245              │ │ 1,832            │  │
+│ │ kg / día efectivo│ │ kg / día efectivo│  │
+│ │ MENORES · 01–26  │ │ MAYORES · 01–26  │  │    sub = rango real seleccionado
+│ └──────────────────┘ └──────────────────┘  │
 │ CPUE · kg / día efectivo                   │
 │ [dual line — MENORES / MAYORES]             │  ← CPUE timeseries
 │                                             │
+│ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐       │
+│ │Volumen│ │Volumen│ │Volumen│ │Volumen│    │  ← Volumen KPI cards (4)
+│ │[Total]│ │[Ind.] │ │[Art.] │ │[Acua.]│   │    1 por flota, antes del chart
+│ │12,345 │ │ 8,210 │ │ 3,891 │ │   244 │   │
+│ │ton/año│ │ton/año│ │ton/año│ │ton/año│   │
+│ └──────┘ └──────┘ └──────┘ └──────┘       │
 │ Volumen Desembarcado · toneladas            │
-│ [multi-line — TOTAL / MAYORES / MENORES /  │  ← landings volume
+│ [multi-line — TOTAL / MAYORES / MENORES /  │  ← landings volume timeseries
 │  COSECHA]                                   │
 │                                             │
 │ Composición · Captura vs Acuacultura        │
@@ -293,6 +301,12 @@ Triggered when the user clicks a **fishing office dot**. Content is stacked top 
 ├─────────────────────────────────────────────┤
 │ ── INDICADORES ECONÓMICOS ──                │
 │                                             │
+│ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐       │
+│ │Valor  │ │Valor  │ │Valor  │ │Valor  │    │  ← Valor KPI cards (4)
+│ │[Total]│ │[Ind.] │ │[Art.] │ │[Acua.]│   │    1 por flota, antes del chart
+│ │ 487.3 │ │ 312.1 │ │ 158.4 │ │  16.8 │   │
+│ │MXN M  │ │MXN M  │ │MXN M  │ │MXN M  │   │
+│ └──────┘ └──────┘ └──────┘ └──────┘       │
 │ Valor de la Producción · MXN                │
 │ [multi-line — TOTAL / MAYORES / MENORES /  │  ← value timeseries
 │  COSECHA]                                   │
@@ -352,8 +366,8 @@ Filters are input parameters passed to all skills simultaneously. Changing any f
 |--------|---------------|---------|-------|
 | **Recurso** | `nombre_principal` | Todas · resource group name (e.g. JUREL) | Mutually exclusive with Especie |
 | **Especie** | `nombre_cientifico_canonico` | Todas · canonical species name (e.g. *Lutjanus peru*) | Mutually exclusive with Recurso. Activates Estatus de Especie section |
-| **Año** | `year_range` | 2001–2026 (full) · 2011–2026 · 2016–2026 | Applied to all charts |
 | **Flota** | `tipo_aviso` (display only) | Pills: Mayores / Menores / Cosecha | Skills always return all three series; frontend shows/hides lines |
+| **Año** | `year_range` | Two free `<select>` elements: from 2001 to 2026 (any interval). Cross-validated: from ≤ to always. | Applied to all charts and KPI cards |
 | **Grupo comercial** | — | *coming soon* | Requires `nombre_principal → grupo_comercial` mapping table in the DB |
 
 **Mutual exclusion rule:** Selecting Recurso resets Especie to "Todas" and vice versa. This matches the skill contract — `nombre_principal` and `nombre_cientifico_canonico` cannot both be non-NULL in the same call.
@@ -364,12 +378,17 @@ Filters are input parameters passed to all skills simultaneously. Changing any f
 
 #### 4.4.1 CPUE KPI cards — 2 cards side by side
 
-| Card | Label | Value | Unit | Sub | Color |
-|------|-------|-------|------|-----|-------|
-| Left | `Artisanal` | `{kpi_menores}` | `kg / día efectivo` | `MENORES · media 5yr` | `#21925F` |
-| Right | `Industrial` | `{kpi_mayores}` | `kg / día efectivo` | `MAYORES · media 5yr` | `#C6892A` |
+Card structure follows the same pattern as Panel A KPI cards: **label** (metric name, 10px uppercase) at top, then a colored **fleet badge**, then the value.
 
-Source: `office_data[key].{mode}.cpue.kpi_menores` / `.kpi_mayores`.  
+| Card | Label | Fleet badge | Value | Unit | Sub | Badge color |
+|------|-------|-------------|-------|------|-----|-------------|
+| Left | `CPUE` | `Artisanal` | mean `cpue_menores` over selected year range | `kg / día efectivo · prom` | `MENORES · {yearStart}–{yearEnd}` | `#21925F` |
+| Right | `CPUE` | `Industrial` | mean `cpue_mayores` over selected year range | `kg / día efectivo · prom` | `MAYORES · {yearStart}–{yearEnd}` | `#C6892A` |
+
+The mean is computed dynamically from the filtered year range (not a pre-computed 5-yr scalar). Sub-line always reflects the user's current Año selection.
+
+In demo: values computed client-side from `office_data[key].{mode}.cpue.cpue_menores[]` / `.cpue_mayores[]` filtered by `yearStart`–`yearEnd`.  
+In production: `conapesca-cpue` returns the full `cpue_series`; frontend computes the mean for the selected range.  
 **Skill:** `conapesca-cpue`
 
 #### 4.4.2 CPUE timeseries chart
@@ -390,7 +409,23 @@ Source: `office_data[key].{mode}.cpue.kpi_menores` / `.kpi_mayores`.
 COSECHA always excluded (no effort concept in aquaculture).  
 **Skill:** `conapesca-cpue` → `cpue_series`: `anio_corte, tipo_aviso, cpue_media, cpue_sd, n_viajes, n_viajes_excluidos`
 
-#### 4.4.3 Volumen Desembarcado chart
+#### 4.4.3 Volumen KPI cards — 4 cards (one per fleet)
+
+Placed immediately **before** the Volumen Desembarcado timeseries. Shows mean annual landed volume over the selected year range, broken down by fleet. Displayed in a 2×2 grid using the same `demo-cpue-kpi-2` container (wraps to 2 rows).
+
+| Card | Label | Fleet badge | Value | Unit | Sub | Badge color |
+|------|-------|-------------|-------|------|-----|-------------|
+| 1 | `Volumen` | `Total` | mean total annual tonnes | `ton / año · prom` | `{yearStart}–{yearEnd}` | `#0B2338` (navy) |
+| 2 | `Volumen` | `Industrial` | mean MAYORES annual tonnes | `ton / año · prom` | `{yearStart}–{yearEnd}` | `#C6892A` (amber) |
+| 3 | `Volumen` | `Artisanal` | mean MENORES annual tonnes | `ton / año · prom` | `{yearStart}–{yearEnd}` | `#21925F` (teal) |
+| 4 | `Volumen` | `Acuacultura` | mean COSECHA annual tonnes | `ton / año · prom` | `{yearStart}–{yearEnd}` | `#1E9EC4` (blue) |
+
+Each card has a top border in the fleet color. Fleet badge is an inline pill (white text on fleet color). Values computed dynamically from selected year range. Cards react to Año filter but are not affected by Flota pills (always show all 4).
+
+In demo: computed client-side from `office_data[key].{mode}.landings.{FLEET}.total_kg[]`.  
+**Skill:** `conapesca-landings-timeseries`
+
+#### 4.4.4 Volumen Desembarcado chart
 
 **Chart type:** Multi-line · **Height:** 130 px · **Y unit:** toneladas (divide `total_kg` by 1,000)
 
@@ -404,7 +439,7 @@ COSECHA always excluded (no effort concept in aquaculture).
 Fleet pills control which lines are visible. TOTAL always shown.  
 **Skill:** `conapesca-landings-timeseries` → `anio_corte, tipo_aviso, total_kg`
 
-#### 4.4.4 Composición — Captura vs Acuacultura
+#### 4.4.5 Composición — Captura vs Acuacultura
 
 Horizontal proportion bars (CSS or SVG). Accumulated over the selected year range.
 
@@ -420,15 +455,29 @@ Do not repeat total volume or value here — those are already in the timeseries
 
 ### 4.5 Indicadores Económicos section
 
-#### 4.5.1 Valor de la Producción chart
+#### 4.5.1 Valor KPI cards — 4 cards (one per fleet)
+
+Placed immediately **before** the Valor de la Producción timeseries. Same structure as the Volumen KPI cards (§4.4.3) but for economic value.
+
+| Card | Label | Fleet badge | Value | Unit | Sub | Badge color |
+|------|-------|-------------|-------|------|-----|-------------|
+| 1 | `Valor` | `Total` | mean total annual MXN M | `MXN M / año · prom` | `{yearStart}–{yearEnd}` | `#0B2338` (navy) |
+| 2 | `Valor` | `Industrial` | mean MAYORES annual MXN M | `MXN M / año · prom` | `{yearStart}–{yearEnd}` | `#C6892A` (amber) |
+| 3 | `Valor` | `Artisanal` | mean MENORES annual MXN M | `MXN M / año · prom` | `{yearStart}–{yearEnd}` | `#21925F` (teal) |
+| 4 | `Valor` | `Acuacultura` | mean COSECHA annual MXN M | `MXN M / año · prom` | `{yearStart}–{yearEnd}` | `#1E9EC4` (blue) |
+
+In demo: computed client-side from `office_data[key].{mode}.landings.{FLEET}.total_valor_mxn[]`.  
+**Skill:** `conapesca-landings-timeseries`
+
+#### 4.5.2 Valor de la Producción chart
 
 **Same skill call as Volumen Desembarcado** (`conapesca-landings-timeseries`) — the skill returns both `total_kg` and `total_valor_mxn` in one response. The frontend renders `total_kg` in Actividad Pesquera and `total_valor_mxn` here.
 
 **Chart type:** Multi-line · **Height:** 130 px · **Y unit:** MXN  
-Same line colors and fleet structure as §4.4.3.  
+Same line colors and fleet structure as §4.4.4.  
 **Skill:** `conapesca-landings-timeseries` → `anio_corte, tipo_aviso, total_valor_mxn`
 
-#### 4.5.2 Coming soon indicators
+#### 4.5.3 Coming soon indicators
 
 | KPI | Future data source |
 |-----|--------------------|

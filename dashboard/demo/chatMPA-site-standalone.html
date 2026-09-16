@@ -2953,7 +2953,7 @@ html { scroll-behavior: smooth; }
 }
 .demo-coming-soon strong { color: #44545E; display: block; margin-bottom: 3px; }
 /* ── Panel B additions ───────────────────────────────── */
-.demo-filter-bar { padding: 10px 16px 8px; border-top: 1px solid #E4E9EC; background: #F8FAFB; display: flex; flex-direction: column; gap: 8px; }
+.demo-filter-bar { padding: 8px 16px; border-top: 1px solid #E4E9EC; background: #F8FAFB; display: flex; flex-direction: column; gap: 6px; }
 .demo-filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .demo-filter-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #808E97; white-space: nowrap; min-width: 44px; }
 .demo-filter-select { font-size: 11px; padding: 3px 7px; border-radius: 5px; border: 1px solid #CBDAE8; background: #fff; color: #2C3942; cursor: pointer; outline: none; }
@@ -3512,33 +3512,15 @@ function showOfficePanel(officeName, regionId, regionName, DATA) {
         (TMCA_COL[tmca0.category]||'#808E97') + '22;color:' + (TMCA_COL[tmca0.category]||'#808E97') + '">' +
         tmca0.category + '</span></div>' +
     '</div>';
-  el.appendChild(rGrid);
-
-  // ── Filter bar ────────────────────────────────────────────────────────────
-  var fBar = document.createElement('div');
+  // ── Filter bar (before KPI row) ──
+    var fBar = document.createElement('div');
   fBar.className = 'demo-filter-bar';
   fBar.innerHTML =
     '<div class="demo-filter-row">' +
       '<span class="demo-filter-label">Recurso</span>' +
-      '<select class="demo-filter-select" id="dFRecurso">' +
-        '<option value="all">Todas</option>' +
-        '<option value="recurso">' + oData.recurso.nombre_principal + '</option>' +
-      '</select>' +
-    '</div>' +
-    '<div class="demo-filter-row">' +
-      '<span class="demo-filter-label">Especie</span>' +
-      '<select class="demo-filter-select" id="dFEspecie">' +
-        '<option value="all">Todas</option>' +
-        '<option value="especie"><em>' + (oData.especie_demo||'') + '</em></option>' +
-      '</select>' +
-    '</div>' +
-    '<div class="demo-filter-row">' +
-      '<span class="demo-filter-label">Año</span>' +
-      '<select class="demo-filter-select" id="dFYear">' +
-        '<option value="2001-2026">2001–2026</option>' +
-        '<option value="2011-2026">2011–2026</option>' +
-        '<option value="2016-2026">2016–2026</option>' +
-      '</select>' +
+      '<select class="demo-filter-select" id="dFRecurso"><option value="all">Todas</option><option value="recurso">' + oData.recurso.nombre_principal + '</option></select>' +
+      '<span class="demo-filter-label" style="margin-left:8px">Especie</span>' +
+      '<select class="demo-filter-select" id="dFEspecie"><option value="all">Todas</option><option value="especie">' + (oData.especie_demo||'') + '</option></select>' +
     '</div>' +
     '<div class="demo-filter-row">' +
       '<span class="demo-filter-label">Flota</span>' +
@@ -3548,14 +3530,21 @@ function showOfficePanel(officeName, regionId, regionName, DATA) {
         '<button class="demo-fleet-pill fp-active-CO" data-fleet="COSECHA">Cosecha</button>' +
       '</div>' +
     '</div>' +
-    '<div class="demo-filter-row" style="opacity:0.45;pointer-events:none">' +
-      '<span class="demo-filter-label">Grupo comercial</span>' +
-      '<select class="demo-filter-select" disabled><option>Todas</option></select>' +
-      '<span style="font-size:9px;color:#AAB6BE;margin-left:5px;font-style:italic">coming soon</span>' +
+    '<div class="demo-filter-row">' +
+      '<span class="demo-filter-label">Año</span>' +
+      '<select class="demo-filter-select" id="dFYearFrom" style="width:60px"><option value="2001">2001</option><option value="2002">2002</option><option value="2003">2003</option><option value="2004">2004</option><option value="2005">2005</option><option value="2006">2006</option><option value="2007">2007</option><option value="2008">2008</option><option value="2009">2009</option><option value="2010">2010</option><option value="2011">2011</option><option value="2012">2012</option><option value="2013">2013</option><option value="2014">2014</option><option value="2015">2015</option><option value="2016">2016</option><option value="2017">2017</option><option value="2018">2018</option><option value="2019">2019</option><option value="2020">2020</option><option value="2021">2021</option><option value="2022">2022</option><option value="2023">2023</option><option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option></select>' +
+      '<span style="font-size:10px;color:#808E97;margin:0 2px">–</span>' +
+      '<select class="demo-filter-select" id="dFYearTo" style="width:60px"><option value="2001">2001</option><option value="2002">2002</option><option value="2003">2003</option><option value="2004">2004</option><option value="2005">2005</option><option value="2006">2006</option><option value="2007">2007</option><option value="2008">2008</option><option value="2009">2009</option><option value="2010">2010</option><option value="2011">2011</option><option value="2012">2012</option><option value="2013">2013</option><option value="2014">2014</option><option value="2015">2015</option><option value="2016">2016</option><option value="2017">2017</option><option value="2018">2018</option><option value="2019">2019</option><option value="2020">2020</option><option value="2021">2021</option><option value="2022">2022</option><option value="2023">2023</option><option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option></select>' +
+      '<span class="demo-filter-label" style="margin-left:12px;opacity:0.45">Grupo comercial</span>' +
+      '<select class="demo-filter-select" disabled style="opacity:0.45"><option>Todas</option></select>' +
+      '<span style="font-size:9px;color:#AAB6BE;margin-left:3px;font-style:italic">coming soon</span>' +
     '</div>';
   el.appendChild(fBar);
 
-  // ── Section: Presión Pesquera ─────────────────────────────────────────────
+  // ── Ranking KPIs (after filters) ──
+  el.appendChild(rGrid);
+
+  // ── Section: Actividad Pesquera ─────────────────────────────────────────────
   var ph = document.createElement('div');
   ph.className = 'demo-section-header';
   ph.textContent = 'Actividad Pesquera';
@@ -3576,6 +3565,11 @@ function showOfficePanel(officeName, regionId, regionName, DATA) {
     '</div>';
   el.appendChild(cpueSec);
 
+  var volKpiDiv = document.createElement('div');
+  volKpiDiv.className = 'demo-cpue-kpi-2';
+  volKpiDiv.id = 'dOffVolKpi';
+  el.appendChild(volKpiDiv);
+
   var volSec = document.createElement('div');
   volSec.className = 'demo-section';
   volSec.innerHTML = '<div class="demo-section-title">Volumen Desembarcado · toneladas</div>' +
@@ -3592,6 +3586,11 @@ function showOfficePanel(officeName, regionId, regionName, DATA) {
   eh.className = 'demo-section-header econ';
   eh.textContent = 'Indicadores Económicos';
   el.appendChild(eh);
+
+  var valKpiDiv = document.createElement('div');
+  valKpiDiv.className = 'demo-cpue-kpi-2';
+  valKpiDiv.id = 'dOffValKpi';
+  el.appendChild(valKpiDiv);
 
   var valSec = document.createElement('div');
   valSec.className = 'demo-section';
@@ -3671,21 +3670,64 @@ function showOfficePanel(officeName, regionId, regionName, DATA) {
       var c = Chart.getChart(id); if(c) c.destroy();
     });
 
-    // CPUE KPI cards
-    var km = d.cpue.kpi_menores, kma = d.cpue.kpi_mayores;
+    // CPUE KPI cards — dynamic mean over selected year range
+    var cpueYrLabel = fs.yearStart === fs.yearEnd ? String(fs.yearStart) : fs.yearStart + '–' + fs.yearEnd;
+    var cpMeR = filterY(d.cpue.years, d.cpue.cpue_menores);
+    var cpMaR = filterY(d.cpue.years, d.cpue.cpue_mayores);
+    var vME = cpMeR.vals.filter(function(v){return v!=null;}); var meanME = vME.length ? vME.reduce(function(a,b){return a+b;},0)/vME.length : null;
+    var vMA = cpMaR.vals.filter(function(v){return v!=null;}); var meanMA = vMA.length ? vMA.reduce(function(a,b){return a+b;},0)/vMA.length : null;
     cpueKpiDiv.innerHTML =
       '<div class="demo-kpi-card">' +
+        '<div class="demo-kpi-card-label">CPUE</div>' +
         '<span class="demo-cpue-fleet-label demo-menores">Artisanal</span>' +
-        '<div class="demo-kpi-card-value">' + fv(km,0) + '</div>' +
-        '<div class="demo-kpi-card-unit">kg / día efectivo</div>' +
-        '<div class="demo-kpi-card-sub">MENORES · media 5yr</div>' +
+        '<div class="demo-kpi-card-value">' + (meanME!=null ? fv(meanME,0) : '—') + '</div>' +
+        '<div class="demo-kpi-card-unit">kg / día efectivo · prom</div>' +
+        '<div class="demo-kpi-card-sub">MENORES · ' + cpueYrLabel + '</div>' +
       '</div>' +
       '<div class="demo-kpi-card">' +
+        '<div class="demo-kpi-card-label">CPUE</div>' +
         '<span class="demo-cpue-fleet-label demo-mayores">Industrial</span>' +
-        '<div class="demo-kpi-card-value">' + fv(kma,0) + '</div>' +
-        '<div class="demo-kpi-card-unit">kg / día efectivo</div>' +
-        '<div class="demo-kpi-card-sub">MAYORES · media 5yr</div>' +
+        '<div class="demo-kpi-card-value">' + (meanMA!=null ? fv(meanMA,0) : '—') + '</div>' +
+        '<div class="demo-kpi-card-unit">kg / día efectivo · prom</div>' +
+        '<div class="demo-kpi-card-sub">MAYORES · ' + cpueYrLabel + '</div>' +
       '</div>';
+
+    // Vol + Val KPI cards — 4 fleets each, dynamic mean over selected year range
+    if (d.landings) {
+      var lndYrLabel = fs.yearStart === fs.yearEnd ? String(fs.yearStart) : fs.yearStart + '–' + fs.yearEnd;
+      function fleetMeanKg(fleet) {
+        if (!d.landings[fleet]) return null;
+        var r = filterY(d.landings.years, d.landings[fleet].total_kg);
+        var v = r.vals.filter(function(x){return x!=null;});
+        return v.length ? v.reduce(function(a,b){return a+b;},0)/v.length/1000 : null;
+      }
+      function fleetMeanVal(fleet) {
+        if (!d.landings[fleet]) return null;
+        var r = filterY(d.landings.years, d.landings[fleet].total_valor_mxn);
+        var v = r.vals.filter(function(x){return x!=null;});
+        return v.length ? v.reduce(function(a,b){return a+b;},0)/v.length/1e6 : null;
+      }
+      function kpiCard4(metric, fleetLabel, val, unit, fleet, yrLbl) {
+        var col = {TOTAL:'#0B2338',MAYORES:'#C6892A',MENORES:'#21925F',COSECHA:'#1E9EC4'}[fleet] || '#44545E';
+        return '<div class="demo-kpi-card" style="border-top:2px solid '+col+'">' +
+          '<div class="demo-kpi-card-label">' + metric + '</div>' +
+          '<span style="display:inline-block;background:'+col+';color:#fff;font-size:8px;font-weight:700;letter-spacing:.04em;padding:1px 5px;border-radius:2px;margin-bottom:3px">' + fleetLabel + '</span>' +
+          '<div class="demo-kpi-card-value">' + (val != null ? fv(val,0) : '—') + '</div>' +
+          '<div class="demo-kpi-card-unit">' + unit + '</div>' +
+          '<div class="demo-kpi-card-sub">' + yrLbl + '</div>' +
+        '</div>';
+      }
+      volKpiDiv.innerHTML =
+        kpiCard4('Volumen', 'Total', fleetMeanKg('TOTAL'), 'ton / año · prom', 'TOTAL', lndYrLabel) +
+        kpiCard4('Volumen', 'Industrial', fleetMeanKg('MAYORES'), 'ton / año · prom', 'MAYORES', lndYrLabel) +
+        kpiCard4('Volumen', 'Artisanal', fleetMeanKg('MENORES'), 'ton / año · prom', 'MENORES', lndYrLabel) +
+        kpiCard4('Volumen', 'Acuacultura', fleetMeanKg('COSECHA'), 'ton / año · prom', 'COSECHA', lndYrLabel);
+      valKpiDiv.innerHTML =
+        kpiCard4('Valor', 'Total', fleetMeanVal('TOTAL'), 'MXN M / año · prom', 'TOTAL', lndYrLabel) +
+        kpiCard4('Valor', 'Industrial', fleetMeanVal('MAYORES'), 'MXN M / año · prom', 'MAYORES', lndYrLabel) +
+        kpiCard4('Valor', 'Artisanal', fleetMeanVal('MENORES'), 'MXN M / año · prom', 'MENORES', lndYrLabel) +
+        kpiCard4('Valor', 'Acuacultura', fleetMeanVal('COSECHA'), 'MXN M / año · prom', 'COSECHA', lndYrLabel);
+    }
 
     // Composition
     var comp = d.composition;
@@ -3771,8 +3813,11 @@ function showOfficePanel(officeName, regionId, regionName, DATA) {
     if (this.value !== 'all') { fs.recurso = 'all'; document.getElementById('dFRecurso').value = 'all'; }
     renderAll();
   });
-  document.getElementById('dFYear').addEventListener('change', function(){
-    var parts = this.value.split('-'); fs.yearStart = +parts[0]; fs.yearEnd = +parts[1]; renderAll();
+  document.getElementById('dFYearFrom').addEventListener('change', function(){
+    fs.yearStart = +this.value; if (fs.yearStart > fs.yearEnd) { fs.yearEnd = fs.yearStart; document.getElementById('dFYearTo').value = fs.yearStart; } renderAll();
+  });
+  document.getElementById('dFYearTo').addEventListener('change', function(){
+    fs.yearEnd = +this.value; if (fs.yearEnd < fs.yearStart) { fs.yearStart = fs.yearEnd; document.getElementById('dFYearFrom').value = fs.yearEnd; } renderAll();
   });
   fBar.querySelectorAll('.demo-fleet-pill').forEach(function(btn){
     btn.addEventListener('click', function(){
