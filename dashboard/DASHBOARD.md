@@ -258,26 +258,54 @@ If `demo_data.mpa_data[mpa_name]` is undefined:
 Triggered when the user clicks a **fishing office dot**. Content is stacked top to bottom.
 
 ```
-┌─────────────────────────────────────────┐
-│ [badge] Fisheries Office                │
-│ Office name                             │  ← panel header
-│ [Region badge] GoC Sur y BCS           │
-├─────────────────────────────────────────┤
-│ [Species / group selector]              │  ← slider / dropdown
-│ ○ All species   ● Pelágicos menores     │
-│   Demersales    Escama    Invertebrados │
-├──────────────┬──────────────────────────┤
-│ ART. CPUE    │ IND. CPUE               │  ← KPI row (2 cards)
-│ xxxx         │ xxxx                    │
-│ kg/eff. day  │ kg/eff. day             │
-├─────────────────────────────────────────┤
-│ CPUE Trend 2001–2026                   │  ← dual line chart
-│ [Artisanal (green) + Industrial (amber)]│
-│ (filtered by selected species/group)    │
-├─────────────────────────────────────────┤
-│ Economic Indicators  [coming soon]      │  ← economic KPIs
-│ [placeholder — Carolina's skills]       │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│ [badge] Fisheries Office                    │
+│ LA PAZ                                      │  ← panel header
+│ ● Golfo de California Sur y BCS             │
+├────────────┬────────────┬────────────────────┤
+│ RANK VOL.  │ RANK VALOR │ TMCA · DESEMB.    │  ← KPI row (3 cards, static)
+│ #26        │ #28        │ −5.5%             │
+│ de 165     │ de 165     │ declining         │
+├─────────────────────────────────────────────┤
+│ Recurso    [ Todas ▾ ]  ←─ mutuamente       │
+│ Especie    [ Todas ▾ ]  ←─ excluyentes      │  ← filter bar
+│ Año        [ 2001–2026 ▾ ]                  │
+│ Flota      [Mayores] [Menores] [Cosecha]    │
+│ Grupo com. [ coming soon ]                  │
+├─────────────────────────────────────────────┤
+│ ── ACTIVIDAD PESQUERA ──                    │
+│                                             │
+│ ┌─────────────────┐ ┌─────────────────┐    │
+│ │ Artisanal       │ │ Industrial      │    │  ← CPUE KPI cards
+│ │ 245 kg/día      │ │ 1,832 kg/día    │    │
+│ │ MENORES · 5yr   │ │ MAYORES · 5yr   │    │
+│ └─────────────────┘ └─────────────────┘    │
+│ CPUE · kg / día efectivo                   │
+│ [dual line — MENORES / MAYORES]             │  ← CPUE timeseries
+│                                             │
+│ Volumen Desembarcado · toneladas            │
+│ [multi-line — TOTAL / MAYORES / MENORES /  │  ← landings volume
+│  COSECHA]                                   │
+│                                             │
+│ Composición · Captura vs Acuacultura        │
+│ Captura     ████████████████  98.3%        │  ← catch composition
+│ Acuacultura ██  1.7%                        │
+├─────────────────────────────────────────────┤
+│ ── INDICADORES ECONÓMICOS ──                │
+│                                             │
+│ Valor de la Producción · MXN                │
+│ [multi-line — TOTAL / MAYORES / MENORES /  │  ← value timeseries
+│  COSECHA]                                   │
+│                                             │
+│ Ingreso por pescador       [coming soon]   │
+│ Empleo artesanal           [coming soon]   │
+│ Índice de depend. mun.     [coming soon]   │
+├─────────────────────────────────────────────┤
+│ ── ESTATUS DE ESPECIE ──                    │
+│ (solo visible cuando filtro Especie activo) │
+│ NOM-059 · IUCN · FishBase · vedas          │
+│ [coming soon]                               │
+└─────────────────────────────────────────────┘
 ```
 
 ### 4.1 Panel header
@@ -285,80 +313,157 @@ Triggered when the user clicks a **fishing office dot**. Content is stacked top 
 | Element | Value |
 |---------|-------|
 | Badge label | `"Fisheries Office"` (amber, always) |
-| Title | Office name (`nombre_oficina_canonico` from `offices` data) |
+| Title | Office name (`nombre_oficina_canonico`) |
 | Region badge | Pill with colored dot + region name (colors from §2 table) |
 
 ---
 
-### 4.2 Species / group selector
+### 4.2 KPI row — 3 cards (static)
 
-A horizontal pill-toggle or slim dropdown rendered between the header and the KPI cards. Changing the selection updates the KPI values and the CPUE trend chart.
+The three top cards **do not react to filters**. They always show the all-species, full-series figures for the office and serve as context before any filtering.
 
-**Options:**
+| Card | Label | Value | Sub | Skill |
+|------|-------|-------|-----|-------|
+| Left | `RANK VOLUMEN` | `#{rank_volumen}` | `de {n_offices} · {pct_volumen}% nación` | `conapesca-national-ranking` |
+| Center | `RANK VALOR` | `#{rank_valor}` | `de {n_offices} · {pct_valor}% nación` | `conapesca-national-ranking` |
+| Right | `TMCA · DESEMBARQUES` | `{tmca}%` (sign-prefixed) | category badge | `conapesca-tmca` |
 
-| Value | Label (ES) | Description |
-|-------|-----------|-------------|
-| `all` | Todas las especies | Fleet aggregate (default) |
-| `pelagicos_menores` | Pelágicos menores | Small pelagics (sardine, mackerel, anchovy) |
-| `pelagicos_mayores` | Pelágicos mayores | Large pelagics (tuna, swordfish, marlin) |
-| `demersales` | Demersales | Bottom fish (snapper, grouper, corvina) |
-| `escama` | Escama | General finfish |
-| `invertebrados` | Invertebrados | Shrimp, octopus, sea cucumber, urchin |
-| `{species_name}` | (individual species) | Available once Carolina's skills are wired |
+**TMCA category colors:**
 
-**Default:** `all` (fleet aggregate)  
-**Data path:** `cpue_regions[region_id].by_group[selected_group]` (coming from Carolina's skills) or `cpue_regions[region_id]` for fleet aggregate.
+| Category | Color |
+|----------|-------|
+| `growing` | `#21925F` |
+| `growing moderately` | `#4FBBD8` |
+| `stable` | `#808E97` |
+| `declining moderately` | `#C6892A` |
+| `declining` | `#CC4C43` |
 
-> **Note for engineers:** Species-level and group-level CPUE time series are not yet in `demo_data.json`. For now, render the selector but use the fleet aggregate (`all`) for all selections. The selector UI is needed in the prototype so stakeholders can see the intended interaction.
+> **Semantic note:** TMCA measures the trend of **landed volume** (fishing activity), NOT stock abundance. A "declining" TMCA may reflect closures, fleet relocation, or resource decline — the chatbot should always clarify this.
+
+Source: `office_data["{OFFICE}|{STATE}"].all.ranking` and `.all.tmca`.
 
 ---
 
-### 4.3 KPI cards — 2 cards side by side
+### 4.3 Filter bar
+
+Filters are input parameters passed to all skills simultaneously. Changing any filter re-runs the affected skills and updates all charts below the KPI row.
+
+| Filter | Field in skill | Options | Notes |
+|--------|---------------|---------|-------|
+| **Recurso** | `nombre_principal` | Todas · resource group name (e.g. JUREL) | Mutually exclusive with Especie |
+| **Especie** | `nombre_cientifico_canonico` | Todas · canonical species name (e.g. *Lutjanus peru*) | Mutually exclusive with Recurso. Activates Estatus de Especie section |
+| **Año** | `year_range` | 2001–2026 (full) · 2011–2026 · 2016–2026 | Applied to all charts |
+| **Flota** | `tipo_aviso` (display only) | Pills: Mayores / Menores / Cosecha | Skills always return all three series; frontend shows/hides lines |
+| **Grupo comercial** | — | *coming soon* | Requires `nombre_principal → grupo_comercial` mapping table in the DB |
+
+**Mutual exclusion rule:** Selecting Recurso resets Especie to "Todas" and vice versa. This matches the skill contract — `nombre_principal` and `nombre_cientifico_canonico` cannot both be non-NULL in the same call.
+
+---
+
+### 4.4 Actividad Pesquera section
+
+#### 4.4.1 CPUE KPI cards — 2 cards side by side
 
 | Card | Label | Value | Unit | Sub | Color |
 |------|-------|-------|------|-----|-------|
-| Left | `ART. CPUE` | `{kpi_menores_mean_cpue}` | `kg / eff. day` | `MENORES · 5-yr mean` | `#21925F` (green) |
-| Right | `IND. CPUE` | `{kpi_mayores_mean_cpue}` | `kg / eff. day` | `MAYORES · 5-yr mean` | `#C6892A` (amber) |
+| Left | `Artisanal` | `{kpi_menores}` | `kg / día efectivo` | `MENORES · media 5yr` | `#21925F` |
+| Right | `Industrial` | `{kpi_mayores}` | `kg / día efectivo` | `MAYORES · media 5yr` | `#C6892A` |
 
-Source: `cpue_regions[conapesca_region_id]` (data is regional — all offices in the same CONAPESCA region share the same time series).
+Source: `office_data[key].{mode}.cpue.kpi_menores` / `.kpi_mayores`.  
+**Skill:** `conapesca-cpue`
 
----
+#### 4.4.2 CPUE timeseries chart
 
-### 4.4 CPUE Trend chart
-
-**Chart type:** Dual line  
-**Height:** 150 px  
-**Title:** `CPUE Trend 2001–2026`
+**Chart type:** Dual line · **Height:** 130 px
 
 | Element | Detail |
 |---------|--------|
-| Line 1 | MENORES (artisanal) — `#21925F` solid, 1.8 px |
-| Line 2 | MAYORES (industrial) — `#C6892A` dashed (4,3), 1.8 px |
-| X axis | Year |
-| Y axis | kg / effective day |
+| Line 1 | MENORES — `#21925F` solid, 2 px, circle points |
+| Line 2 | MAYORES — `#C6892A` dashed (4,3), 2 px, triangle points |
+| Hollow points | When `n_viajes < 5` (low reliability) |
+| X axis | Year (integer, filtered by Año selection) |
+| Y axis | `kg/día` |
 | Y min | 0 |
-| Legend | Bottom, 9px font |
-| Note below | `Regional aggregate · CONAPESCA · {region_name}` |
+| Legend | Bottom, 9px |
+| Note below | `Oficina {name} · CONAPESCA · {yearStart}–{yearEnd}` |
 
-When a species/group is selected and species-level data is available, this chart shows only that group's CPUE (both fleets filtered). Title becomes: `CPUE Trend — {selected_label}`.
+COSECHA always excluded (no effort concept in aquaculture).  
+**Skill:** `conapesca-cpue` → `cpue_series`: `anio_corte, tipo_aviso, cpue_media, cpue_sd, n_viajes, n_viajes_excluidos`
+
+#### 4.4.3 Volumen Desembarcado chart
+
+**Chart type:** Multi-line · **Height:** 130 px · **Y unit:** toneladas (divide `total_kg` by 1,000)
+
+| Line | Color | Dash |
+|------|-------|------|
+| TOTAL | `#0B2338` | solid, 2 px |
+| MAYORES | `#C6892A` | dashed (4,3) |
+| MENORES | `#21925F` | solid |
+| COSECHA | `#1E9EC4` | dotted (2,2) |
+
+Fleet pills control which lines are visible. TOTAL always shown.  
+**Skill:** `conapesca-landings-timeseries` → `anio_corte, tipo_aviso, total_kg`
+
+#### 4.4.4 Composición — Captura vs Acuacultura
+
+Horizontal proportion bars (CSS or SVG). Accumulated over the selected year range.
+
+| Bar | Color | Value |
+|-----|-------|-------|
+| Captura (MAYORES + MENORES) | `#1E9EC4` | `{captura_pct_vol}%` |
+| Acuacultura (COSECHA) | `#C6892A` | `{cosecha_pct_vol}%` |
+
+Do not repeat total volume or value here — those are already in the timeseries charts.  
+**Skill:** `conapesca-catch-composition` → `captura_pct_vol, cosecha_pct_vol, captura_pct_val, cosecha_pct_val`
 
 ---
 
-### 4.5 Economic Indicators section *(coming soon)*
+### 4.5 Indicadores Económicos section
 
-**Status:** Placeholder — Carolina's skills are in development.
+#### 4.5.1 Valor de la Producción chart
 
-**When available, this section will include:**
+**Same skill call as Volumen Desembarcado** (`conapesca-landings-timeseries`) — the skill returns both `total_kg` and `total_valor_mxn` in one response. The frontend renders `total_kg` in Actividad Pesquera and `total_valor_mxn` here.
 
-| KPI | Description | Unit |
-|-----|-------------|------|
-| Economic value of catch | Total landed value by fleet | MXN / USD million/yr |
-| Revenue per fisher | Average income per registered fisher | MXN/yr |
-| Employment (artisanal) | Registered fishers in the region | persons |
-| Dependency index | % of municipal income from fishing | % |
+**Chart type:** Multi-line · **Height:** 130 px · **Y unit:** MXN  
+Same line colors and fleet structure as §4.4.3.  
+**Skill:** `conapesca-landings-timeseries` → `anio_corte, tipo_aviso, total_valor_mxn`
 
-**Spec will be finalized once the skills are complete.**  
-Placeholder text to show in the panel for now: `"Economic indicators coming soon — skills in development."`
+#### 4.5.2 Coming soon indicators
+
+| KPI | Future data source |
+|-----|--------------------|
+| Ingreso por pescador | Padrón de permisos CONAPESCA + `total_valor_mxn / n_pescadores` |
+| Empleo artesanal | Anuario Estadístico de Pesca (SAGARPA/SADER) — available at state level only |
+| Índice de dependencia municipal | Municipal GDP/PEA from INEGI crossed with local production |
+
+Show placeholder text: `coming soon` for each item.
+
+---
+
+### 4.6 Estatus de Especie section
+
+**Visible only when** the Especie filter is active (`nombre_cientifico_canonico` non-NULL). Hidden when Recurso or "Todas" is selected.
+
+**Skill:** `conapesca-species-status` *(pending implementation)*
+
+| Data | Source | Strategy |
+|------|--------|----------|
+| NOM-059 status | Pre-computed reference table | Manual update (changes rarely) |
+| IUCN category | Pre-computed, periodic refresh | Annual re-evaluation |
+| FishBase traits (TL, Lmax, habitat) | `get_taxonomy()` via conapesca MCP | Already indexed |
+| Vedas y temporadas | Pre-computed reference table | Manual update |
+| Planes de manejo vigentes | `amp-planes-manejo-mcp` (real time) | Fast, updates with revisions |
+
+Show placeholder: `coming soon · solo con filtro especie` until skill is implemented.
+
+---
+
+### 4.7 Panel B — no-data state
+
+If `demo_data.office_data["{OFFICE}|{STATE}"]` is undefined:
+- Show panel header (office name + region badge)
+- Show grey text: `"No precomputed data for this office. In production, the AI orchestrator computes on demand."`
+- Do not render KPI cards, filter bar, or charts.
 
 ---
 
@@ -473,23 +578,79 @@ Species/group-level CPUE: coming once Carolina's skills are complete.
 }
 ```
 
-### `cpue_regions[region_id]` — Panel B source
+### `cpue_regions[region_id]` — Panel B (legacy regional aggregate)
 
 ```json
 {
   "region_name": "Golfo de California Norte",
   "menores": {
     "year": [2001, 2002, ...],
-    "cpue": [1150.3, 1210.8, ...],
-    "total_kg": [...],
-    "total_dias": [...]
+    "cpue": [1150.3, 1210.8, ...]
   },
   "mayores": { /* same structure */ },
   "kpi_menores_mean_cpue": 1284.32,
   "kpi_mayores_mean_cpue": 8713.04
-  /* by_group: coming once Carolina's skills are wired */
 }
 ```
+
+### `office_data["{OFFICE}|{STATE}"]` — Panel B (per-office, skill-computed)
+
+Key format: `"{nombre_oficina_canonico}|{nombre_estado}"`, e.g. `"CABO SAN LUCAS|BAJA CALIFORNIA SUR"`.  
+Each office has two sub-objects: `all` (no species/resource filter) and `recurso` (filtered to `nombre_principal`).
+
+```json
+{
+  "nombre_oficina": "CABO SAN LUCAS",
+  "nombre_estado":  "BAJA CALIFORNIA SUR",
+  "region_id":      3,
+  "region_name":    "Golfo de California Sur y BCS",
+  "recurso_demo":   "JUREL",
+  "especie_demo":   "Lutjanus peru",
+  "all": {
+    "ranking": {
+      "rank_volumen": 131, "rank_valor": 125, "n_offices": 165,
+      "pct_volumen": 0.02, "pct_valor": 0.05,
+      "total_toneladas": 7476, "total_valor_mxn": 368950664
+    },
+    "tmca": {
+      "tmca": -24.59, "category": "declining",
+      "yr_start": 2016, "yr_end": 2026
+    },
+    "cpue": {
+      "kpi_menores": 245.3, "kpi_mayores": 1832.1,
+      "years":        [2001, 2002, ...],
+      "cpue_menores": [210.4, 198.7, ...],
+      "cpue_mayores": [1540.2, 1620.8, ...],
+      "n_menores":    [12, 15, ...],
+      "n_mayores":    [8, 11, ...]
+    },
+    "landings": {
+      "years": [2000, 2001, ...],
+      "TOTAL":   { "total_kg": [76371, ...], "total_valor_mxn": [7045991, ...] },
+      "MAYORES": { "total_kg": [...], "total_valor_mxn": [...] },
+      "MENORES": { "total_kg": [...], "total_valor_mxn": [...] },
+      "COSECHA": { "total_kg": [...], "total_valor_mxn": [...] }
+    },
+    "composition": {
+      "captura_pct_vol": 100, "cosecha_pct_vol": 0,
+      "captura_pct_val": 100, "cosecha_pct_val": 0
+    }
+  },
+  "recurso": { /* same structure, filtered to nombre_principal */ }
+}
+```
+
+**Demo offices with precomputed data:**
+
+| Key | Recurso demo | Especie demo |
+|-----|-------------|-------------|
+| `CABO SAN LUCAS\|BAJA CALIFORNIA SUR` | JUREL | *Lutjanus peru* |
+| `LA PAZ\|BAJA CALIFORNIA SUR` | CAMARON | *Litopenaeus vannamei* |
+| `MAZATLAN\|SINALOA` | CAMARON | *Litopenaeus vannamei* |
+| `GUAYMAS\|SONORA` | CAMARON | *Penaeus stylirostris* |
+| `ENSENADA\|BAJA CALIFORNIA` | ABULON | *Haliotis fulgens* |
+
+All other offices show the no-data state (§4.7). In production the orchestrator computes on demand for any office.
 
 ---
 
@@ -523,12 +684,16 @@ A working proof-of-concept is in `dashboard/demo/`:
 
 The demo uses Leaflet.js + Chart.js 4.x. It is a display reference only — not production code.
 
+**What the demo has:**
+- Panel A fully implemented (biomass, MHW, Chl-a)
+- Panel B implemented for 5 demo offices (CABO SAN LUCAS, LA PAZ, MAZATLAN, GUAYMAS, ENSENADA) with real CONAPESCA data
+
 **What the demo does not yet have:**
-- Panel B (Fisheries Office panel) — new per this spec
-- Species/group selector
+- Species-level data for Panel B (demo shows resource-group level only; especie filter label is shown but uses recurso data)
 - Economic KPIs (Carolina's skills pending)
-- NRSI panel
-- Invertebrate time-series charts (4-taxon)
+- NRSI panel (Panel A)
+- Invertebrate time-series charts, 4-taxon (Panel A)
+- Estatus de Especie section (Panel B)
 
 ---
 
@@ -544,10 +709,16 @@ The demo uses Leaflet.js + Chart.js 4.x. It is a display reference only — not 
 7. Orchestrator returns JSON → dashboard renders Panel A
 
 **Flow B — User clicks a Fishing Office:**
-1. Dashboard calls orchestrator with `{office_name, conapesca_region_id, selected_group}`
-2. Orchestrator runs `conapesca-cpue` skill (Carolina) → CPUE time series for selected group/species
-3. Orchestrator runs `conapesca-economic` skill (Carolina) → economic KPIs
-4. Orchestrator returns JSON → dashboard renders Panel B
+1. Dashboard calls orchestrator with `{office_filter, state_filter, nombre_principal?, nombre_cientifico_canonico?, year_range?, tipo_aviso?}`
+2. Orchestrator runs `conapesca-national-ranking` → Rank Volumen, Rank Valor, % nacional (static, all-species)
+3. Orchestrator runs `conapesca-tmca` → TMCA %, category (static, all-species)
+4. Orchestrator runs `conapesca-cpue` → CPUE KPI cards + timeseries (MENORES / MAYORES)
+5. Orchestrator runs `conapesca-landings-timeseries` → Volumen (kg) + Valor (MXN) timeseries per fleet
+6. Orchestrator runs `conapesca-catch-composition` → % captura vs acuacultura
+7. If `nombre_cientifico_canonico` non-NULL: orchestrator runs `conapesca-species-status` → Estatus de Especie
+8. Orchestrator returns JSON → dashboard renders Panel B
+
+Skills 2–3 are always called without filters (all-species). Skills 4–7 are called with the active filter combination.
 
 `demo_data.json` short-circuits both flows with pre-computed results.
 
@@ -562,5 +733,9 @@ The demo uses Leaflet.js + Chart.js 4.x. It is a display reference only — not 
 | `ltem-nrsi-index` | A | Reef trophic health index (−1 to +1) |
 | `erddap-sst-anomaly` | A | SST °C + MHW annual days (OISST, GoC only) |
 | `erddap-chlorophyll` | A | Chl-a mg/m³ annual mean (MODIS) |
-| `conapesca-cpue` *(Carolina)* | B | CPUE kg/day by species group and fleet |
-| `conapesca-economic` *(Carolina)* | B | Economic KPIs: landed value, revenue per fisher, employment |
+| `conapesca-national-ranking` | B | National rank by volume and value; % of national total — feeds KPI row (static) |
+| `conapesca-tmca` | B | Mean annual growth rate of landed volume + trend category — feeds KPI row (static) |
+| `conapesca-cpue` | B | CPUE kg/eff.day per fleet (MENORES/MAYORES) — feeds CPUE KPI cards + timeseries |
+| `conapesca-landings-timeseries` | B | Annual kg + MXN per fleet — feeds both Volumen and Valor charts |
+| `conapesca-catch-composition` | B | % capture vs aquaculture in volume and value — feeds composition bars |
+| `conapesca-species-status` *(pending)* | B | Species regulatory and ecological profile — feeds Estatus de Especie (especie filter only) |
