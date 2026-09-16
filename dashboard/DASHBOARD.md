@@ -262,16 +262,16 @@ Triggered when the user clicks a **fishing office dot**. Content is stacked top 
 │ [badge] Fisheries Office                    │
 │ LA PAZ                                      │  ← panel header
 │ ● Golfo de California Sur y BCS             │
-├────────────┬────────────┬────────────────────┤
-│ RANK VOL.  │ RANK VALOR │ TMCA · DESEMB.    │  ← KPI row (3 cards, static)
-│ #26        │ #28        │ −5.5%             │
-│ de 165     │ de 165     │ declining         │
 ├─────────────────────────────────────────────┤
 │ Recurso    [ Todas ▾ ]  ←─ mutuamente       │
-│ Especie    [ Todas ▾ ]  ←─ excluyentes      │  ← filter bar
+│ Especie    [ Todas ▾ ]  ←─ excluyentes      │  ← filter bar (first)
 │ Flota      [Mayores] [Menores] [Cosecha]    │
 │ Año        [ 2001 ▾ ] – [ 2026 ▾ ]  libre  │
 │ Grupo comercial [ coming soon ]             │
+├────────────┬────────────┬────────────────────┤
+│ RANK VOL.  │ RANK VALOR │ TMCA · DESEMB.    │  ← KPI row (3 cards)
+│ #26        │ #28        │ −5.5%             │    reacts to Recurso/Especie
+│ de 165     │ de 165     │ declining         │
 ├─────────────────────────────────────────────┤
 │ ── ACTIVIDAD PESQUERA ──                    │
 │                                             │
@@ -332,9 +332,16 @@ Triggered when the user clicks a **fishing office dot**. Content is stacked top 
 
 ---
 
-### 4.2 KPI row — 3 cards (static)
+### 4.2 KPI row — 3 cards
 
-The three top cards **do not react to filters**. They always show the all-species, full-series figures for the office and serve as context before any filtering.
+These cards sit **below the filter bar**. Filter behavior differs by skill:
+
+**Ranking cards** (`conapesca-national-ranking`) react to all active filters — Recurso, Especie, and Año. Filtering is applied at the MCP data layer (`get_landings()`), so the skill always ranks over whatever data arrives:
+- No filter: all-species rank for the full selected year range.
+- Recurso filter: rank within that resource group.
+- Especie filter: rank within that specific species fishery.
+
+**TMCA card** (`conapesca-tmca`) reacts to Recurso and Especie filters. It does **not** use `year_range` directly — instead it uses a `window` parameter (default: 10 years back from the most recent year in the data). The Año filter indirectly affects the result by limiting which years reach the skill, which shifts `yr_end = max(anio_corte)` of the filtered dataset.
 
 | Card | Label | Value | Sub | Skill |
 |------|-------|-------|-----|-------|
@@ -354,13 +361,14 @@ The three top cards **do not react to filters**. They always show the all-specie
 
 > **Semantic note:** TMCA measures the trend of **landed volume** (fishing activity), NOT stock abundance. A "declining" TMCA may reflect closures, fleet relocation, or resource decline — the chatbot should always clarify this.
 
-Source: `office_data["{OFFICE}|{STATE}"].all.ranking` and `.all.tmca`.
+Source in production: `conapesca-national-ranking` and `conapesca-tmca` called with the active filter combination.  
+Source in demo: `office_data["{OFFICE}|{STATE}"].all.ranking` and `.all.tmca` (pre-computed all-species only — demo limitation, not design intent).
 
 ---
 
 ### 4.3 Filter bar
 
-Filters are input parameters passed to all skills simultaneously. Changing any filter re-runs the affected skills and updates all charts below the KPI row.
+Filters are input parameters passed to all skills simultaneously. Changing any filter re-runs all skills and updates all content below the filter bar — including the ranking KPI row and all charts.
 
 | Filter | Field in skill | Options | Notes |
 |--------|---------------|---------|-------|
@@ -759,15 +767,15 @@ The demo uses Leaflet.js + Chart.js 4.x. It is a display reference only — not 
 
 **Flow B — User clicks a Fishing Office:**
 1. Dashboard calls orchestrator with `{office_filter, state_filter, nombre_principal?, nombre_cientifico_canonico?, year_range?, tipo_aviso?}`
-2. Orchestrator runs `conapesca-national-ranking` → Rank Volumen, Rank Valor, % nacional (static, all-species)
-3. Orchestrator runs `conapesca-tmca` → TMCA %, category (static, all-species)
+2. Orchestrator runs `conapesca-national-ranking` → Rank Volumen, Rank Valor, % nacional
+3. Orchestrator runs `conapesca-tmca` → TMCA %, category
 4. Orchestrator runs `conapesca-cpue` → CPUE KPI cards + timeseries (MENORES / MAYORES)
 5. Orchestrator runs `conapesca-landings-timeseries` → Volumen (kg) + Valor (MXN) timeseries per fleet
 6. Orchestrator runs `conapesca-catch-composition` → % captura vs acuacultura
 7. If `nombre_cientifico_canonico` non-NULL: orchestrator runs `conapesca-species-status` → Estatus de Especie
 8. Orchestrator returns JSON → dashboard renders Panel B
 
-Skills 2–3 are always called without filters (all-species). Skills 4–7 are called with the active filter combination.
+All skills (2–7) receive the same active filter combination (`nombre_principal`, `nombre_cientifico_canonico`, `year_range`).
 
 `demo_data.json` short-circuits both flows with pre-computed results.
 
@@ -782,8 +790,8 @@ Skills 2–3 are always called without filters (all-species). Skills 4–7 are c
 | `ltem-nrsi-index` | A | Reef trophic health index (−1 to +1) |
 | `erddap-sst-anomaly` | A | SST °C + MHW annual days (OISST, GoC only) |
 | `erddap-chlorophyll` | A | Chl-a mg/m³ annual mean (MODIS) |
-| `conapesca-national-ranking` | B | National rank by volume and value; % of national total — feeds KPI row (static) |
-| `conapesca-tmca` | B | Mean annual growth rate of landed volume + trend category — feeds KPI row (static) |
+| `conapesca-national-ranking` | B | National rank by volume and value; % of national total — feeds ranking KPI cards (reacts to Recurso/Especie filters) |
+| `conapesca-tmca` | B | Mean annual growth rate of landed volume + trend category — feeds TMCA KPI card (reacts to Recurso/Especie filters) |
 | `conapesca-cpue` | B | CPUE kg/eff.day per fleet (MENORES/MAYORES) — feeds CPUE KPI cards + timeseries |
 | `conapesca-landings-timeseries` | B | Annual kg + MXN per fleet — feeds both Volumen and Valor charts |
 | `conapesca-catch-composition` | B | % capture vs aquaculture in volume and value — feeds composition bars |
